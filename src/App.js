@@ -3,9 +3,10 @@ import './App.css';
 import {
   HubConnectionBuilder,
 } from '@microsoft/signalr';
-import { Container, Row, Col, Form, Button, Modal, ListGroup, InputGroup, FormControl, Card, Toast, ToastContainer, Navbar, Nav, NavDropdown } from 'react-bootstrap';
+import { Container, Row, Col, Form, Button, Modal, ListGroup, InputGroup, FormControl, Card, Navbar, Nav, NavDropdown, Badge } from 'react-bootstrap';
 import { TrashFill, Plus } from 'react-bootstrap-icons';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import toast, { Toaster } from 'react-hot-toast'
 
 function ObjectInModal(props) {
   return (
@@ -135,23 +136,6 @@ function ObjectInReceiveMethod(props) {
   );
 }
 
-function DisplayNotify(props) {
-  return (
-    <ToastContainer position="top-end">
-
-      <Toast>
-        <Toast.Header>
-          <img src="holder.js/20x20?text=%20" className="rounded me-2" alt="" />
-          <strong className="me-auto">Bootstrap</strong>
-          <small className="text-muted">just now</small>
-        </Toast.Header>
-        <Toast.Body>See? Just like this.</Toast.Body>
-      </Toast>
-
-    </ToastContainer>
-  );
-}
-
 export default class App extends Component {
   constructor(props) {
     super(props);
@@ -242,7 +226,14 @@ export default class App extends Component {
           console.log("Receive: ");
           console.log(method.name, data);
           this.addAndSaveLog("Receive. Method: " + method.name + ", Args: " + this.toStringData(method.args, data));
-          this.render(<DisplayNotify />);
+
+          toast(() => (
+            <span>
+              <Badge bg="success">Receive</Badge>
+              {method.name}<br/>
+              Args: {this.toStringData(method.args, data)}
+            </span>
+          ));
         });
       });
     });
@@ -282,6 +273,15 @@ export default class App extends Component {
       console.log("Send: ");
       console.log(method.name, method.args.map(arg => this.convertSendingData(arg)));
       this.addAndSaveLog("Send. Method: " + method.name + ", Args: " + this.toStringData(method.args, method.args.map(arg => this.convertSendingData(arg))));
+
+      toast(() => (
+        <span>
+          <Badge bg="primary">Send</Badge>
+          {method.name}<br/>
+          Args: {this.toStringData(method.args, method.args.map(arg => this.convertSendingData(arg)))}
+        </span>
+      ));
+
     } catch (err) {
       console.error(err);
     }
@@ -715,31 +715,34 @@ export default class App extends Component {
     this.setState({url: url});
     localStorage.setItem("Url", url);
 
-    this.setState({sendMethods: sendMethods});
-    this.saveSendMethods();
+    let sendJson = JSON.stringify(sendMethods);
+    localStorage.setItem("SendMethods", sendJson);
 
-    this.setState({receiveMethods: receiveMethods});
-    this.saveReceiveMethods();
+    let receiveJson = JSON.stringify(receiveMethods);
+    localStorage.setItem("ReceiveMethods", receiveJson);
 
     this.handleClearLogs();
+
+    this.setStateFromLocalStorage();
   }
 
   render() {
     return (
       <>
-      <Navbar  bg="primary" variant="dark">
-    <Container>
-      <Navbar.Brand href="/">SignalRGuy</Navbar.Brand>
-      <Navbar.Toggle aria-controls="basic-navbar-nav" />
-      <Navbar.Collapse id="basic-navbar-nav">
-        <Nav className="me-auto">
-          <NavDropdown title="Actions" id="basic-nav-dropdown">
-            <NavDropdown.Item onClick={this.handleApplingTutorialSettings}>Apply tutorial values</NavDropdown.Item>
-          </NavDropdown>
-        </Nav>
-      </Navbar.Collapse>
-    </Container>
-  </Navbar>
+        <Toaster position="top-right" />
+        <Navbar  bg="primary" variant="dark">
+          <Container>
+            <Navbar.Brand href="/">SignalRGuy</Navbar.Brand>
+            <Navbar.Toggle aria-controls="basic-navbar-nav" />
+            <Navbar.Collapse id="basic-navbar-nav">
+              <Nav className="me-auto">
+                <NavDropdown title="Actions" id="basic-nav-dropdown">
+                  <NavDropdown.Item onClick={this.handleApplingTutorialSettings}>Apply tutorial values</NavDropdown.Item>
+                </NavDropdown>
+              </Nav>
+            </Navbar.Collapse>
+          </Container>
+        </Navbar>
 
         <div className="url">
           <InputGroup className="mb-3">
