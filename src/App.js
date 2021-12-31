@@ -3,139 +3,20 @@ import './App.css';
 import {
   HubConnectionBuilder,
 } from '@microsoft/signalr';
-import { Container, Row, Col, Form, Button, Modal, ListGroup, InputGroup, FormControl, Card, Badge } from 'react-bootstrap';
+import { Container, Row, Col, Form, Button, Modal, Card, Badge } from 'react-bootstrap';
 import { TrashFill, Plus } from 'react-bootstrap-icons';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import toast, { Toaster } from 'react-hot-toast';
 import { Header } from './components/Header';
-
-function ObjectInModal(props) {
-  return (
-    <Row>
-      <Col xs="auto">
-      <>
-      &nbsp;
-      </>
-      </Col>
-      <Col xs="auto">
-        {props.properties.map((property, propertyIndex) => {
-          let propertyIndexes = [ ...props.propertyIndexes ];
-          propertyIndexes.push(propertyIndex);
-
-          return (
-            <>
-              <Row className="mb-3">
-                <Col xs="auto">
-                  <Form.Control type="text" placeholder="Input argument name" value={property.name} onChange={(e) => props.handleChangePropName(e, props.argIndex, propertyIndexes)} />
-                </Col>
-                <Col xs="auto">
-                  <Form.Select defaultValue={property.type} onChange={(e) => props.handleChangePropType(e, props.argIndex, propertyIndexes)}>
-                    <option value="string">string</option>
-                    <option value="int">int</option>
-                    <option value="bool">bool</option>
-                    <option value="DateTime">DateTime</option>
-                    <option value="object">object</option>
-                  </Form.Select>
-                </Col>
-                <Col xs="auto">
-                  {property.type === "object" &&
-                    <Button variant="info" type="button" onClick={() => props.handleAddProperty(props.argIndex, propertyIndexes)}>
-                      <Plus/>
-                    </Button>
-                  }
-                  <Button variant="danger" type="button" onClick={() => props.handleDeleteProp(props.argIndex, propertyIndexes)}>
-                    <TrashFill/>
-                  </Button>
-                </Col>
-              </Row>
-              {property.type === "object" &&
-                <ObjectInModal
-                  argIndex={props.argIndex}
-                  properties={property.properties}
-                  propertyIndexes={propertyIndexes}
-                  handleChangePropName={(event, argIndex, propertyIndexes) => props.handleChangePropName(event, argIndex, propertyIndexes)}
-                  handleChangePropType={(event, argIndex, propertyIndexes) => props.handleChangePropType(event, argIndex, propertyIndexes)}
-                  handleAddProperty={(argIndex, propertyIndexes) => props.handleAddProperty(argIndex, propertyIndexes)}
-                  handleDeleteProp={(argIndex, propertyIndexes) => props.handleDeleteProp(argIndex, propertyIndexes)}
-                />
-              }
-            </>
-          )
-        })}
-      </Col>
-    </Row>
-  );
-}
-
-function ObjectInSendMethod(props) {
-  return (
-    <Row>
-      <Col xs="auto">
-      <>
-      &nbsp;
-      </>
-      </Col>
-      <Col>
-        {props.properties.map((property, propertyIndex) => {
-          let propertyIndexes = [ ...props.propertyIndexes ];
-          propertyIndexes.push(propertyIndex);
-
-          return (
-            <div key={propertyIndex}>
-              <Row key={propertyIndex} className="mb-3">
-                <Col xs="auto">
-                  {property.name} ( {property.type} )
-                </Col>
-                <Col>
-                  {property.type !== "object" &&
-                    <Form.Control type="text" placeholder="Input value" value={property.value} onChange={(e) => props.handleChangeArgPropertyValue(e, props.methodIndex, props.argIndex, propertyIndexes)} />
-                  }
-                </Col>
-              </Row>
-              {property.type === "object" &&
-                <ObjectInSendMethod
-                  methodIndex={props.methodIndex}
-                  argIndex={props.argIndex}
-                  properties={property.properties}
-                  propertyIndexes={propertyIndexes}
-                  handleChangeArgPropertyValue={(event, methodIndex, argIndex, propertyIndexes) => props.handleChangeArgPropertyValue(event, methodIndex, argIndex, propertyIndexes)}
-                />
-              }
-            </div>
-          );
-        })}
-      </Col>
-    </Row>
-  );
-}
-
-function ObjectInReceiveMethod(props) {
-  return (
-    <Row>
-      <Col xs="auto">
-      <>
-      &nbsp;
-      </>
-      </Col>
-      <Col xs="auto">
-        {props.properties.map((property, propertyIndex) => 
-          <div key={propertyIndex}>
-            <Row key={propertyIndex} className="mb-3">
-              <Col xs="auto">
-                {property.name} ( {property.type} )
-              </Col>
-            </Row>
-            {property.type === "object" &&
-              <ObjectInReceiveMethod
-                properties={property.properties}
-              />
-            }
-          </div>
-        )}
-      </Col>
-    </Row>
-  );
-}
+import { Url } from './components/Url';
+import { Log } from './components/Log';
+import { ObjectInModal } from './components/ObjectInModal';
+import { ObjectInSendMethod } from './components/ObjectInSendMethod';
+import { ObjectInReceiveMethod } from './components/ObjectInReceiveMethod';
+import toISOStringWithTimezone from './functions/toISOStringWithTimezone';
+import checkValidName from './functions/checkValidName';
+import toStringData from './functions/toStringData';
+import convertSendingData from './functions/convertSendingData';
 
 export default class App extends Component {
   constructor(props) {
@@ -196,7 +77,8 @@ export default class App extends Component {
     this.setState({url: event.target.value});
   }
 
-  async handleConnect(url) {
+  handleConnect = () => {
+    let url = this.state.url;
     // ローカルストレージにURLを保存
     localStorage.setItem("Url", url);
 
@@ -226,13 +108,13 @@ export default class App extends Component {
         connection.on(method.name, (...data) => {
           console.log("Receive: ");
           console.log(method.name, data);
-          this.addAndSaveLog("Receive. Method: " + method.name + ", Args: " + this.toStringData(method.args, data));
+          this.addAndSaveLog("Receive. Method: " + method.name + ", Args: " + toStringData(method.args, data));
 
           toast(() => (
             <span>
               <Badge bg="success">Receive</Badge>
               {method.name}<br/>
-              Args: {this.toStringData(method.args, data)}
+              Args: {toStringData(method.args, data)}
             </span>
           ));
         });
@@ -245,41 +127,20 @@ export default class App extends Component {
     this.addAndSaveLog("Disconnecting to " + this.state.url);
   }
 
-  convertSendingData(arg) {
-    if (arg.type === "int") {
-      return parseInt(arg.value, 10);
-    }
-    else if (arg.type === "object") {
-      return Object.fromEntries(arg.properties.map((p) => [p.name, this.convertSendingData(p)]));
-    }
-    else {
-      return arg.value;
-    }
-  }
-
-  toStringData(args, data) {
-    let result = [];
-    for (let i = 0; i < args.length; i++) {
-      result.push(args[i].name + ":" + JSON.stringify(data[i]));
-    }
-    return result;
-    //return arg.name + ":" + JSON.stringify(this.convertSendingData(arg));
-  }
-
   handleSend(index) {
     let method = this.state.sendMethods[index];
 
     try {
-      this.state.connection.invoke(method.name, ...method.args.map(arg => this.convertSendingData(arg)));
+      this.state.connection.invoke(method.name, ...method.args.map(arg => convertSendingData(arg)));
       console.log("Send: ");
-      console.log(method.name, method.args.map(arg => this.convertSendingData(arg)));
-      this.addAndSaveLog("Send. Method: " + method.name + ", Args: " + this.toStringData(method.args, method.args.map(arg => this.convertSendingData(arg))));
+      console.log(method.name, method.args.map(arg => convertSendingData(arg)));
+      this.addAndSaveLog("Send. Method: " + method.name + ", Args: " + toStringData(method.args, method.args.map(arg => convertSendingData(arg))));
 
       toast(() => (
         <span>
           <Badge bg="primary">Send</Badge>
           {method.name}<br/>
-          Args: {this.toStringData(method.args, method.args.map(arg => this.convertSendingData(arg)))}
+          Args: {toStringData(method.args, method.args.map(arg => convertSendingData(arg)))}
         </span>
       ));
 
@@ -389,16 +250,6 @@ export default class App extends Component {
     this.setState({methodArgsInModal: args});
   }
 
-  checkArrayName(array) {
-    let filtered = array.filter(item => item.name.match(/^[A-Za-z0-9]+$/));
-    array.forEach(item => {
-      if ("properties" in item) {
-        item.properties = this.checkArrayName(item.properties);
-      }
-    });
-    return filtered;
-  }
-
   handleAddMethod = () => {
     let methods;
     if (this.state.modalSendOrReceive) {
@@ -410,7 +261,7 @@ export default class App extends Component {
 
     // 名前が条件に合うもののみ使う
     let args = this.state.methodArgsInModal;
-    let filteredArgs = this.checkArrayName(args);
+    let filteredArgs = checkValidName(args);
 
     methods.push({name: this.state.methodNameInModal, args: filteredArgs});
 
@@ -460,7 +311,7 @@ export default class App extends Component {
 
     // 名前が条件に合うもののみ使う
     let args = this.state.methodArgsInModal;
-    let filteredArgs = this.checkArrayName(args);
+    let filteredArgs = checkValidName(args);
 
     methods[this.state.modalIndex] = {name: this.state.methodNameInModal, args: filteredArgs};
 
@@ -499,72 +350,22 @@ export default class App extends Component {
     this.saveSendMethods();
   }
 
-  handleClearLogs = () => {
-    let logs = this.state.logs;
-    logs = [];
-    this.setState({logs: logs});
-
-    let json = JSON.stringify(logs);
-    localStorage.setItem("Logs", json);
-  }
-
-  setSendMethods = () => {
-    // ローカルストレージがなければ初期化して保存
-    if (!localStorage.getItem("SendMethods")) {
-      let sendMethods = JSON.parse("[]");
-      localStorage.setItem("SendMethods", sendMethods);
-    }
-
-    let json = localStorage.getItem("SendMethods");
-    let sendMethods = JSON.parse(json);
-    this.setState({sendMethods: sendMethods});
-  }
-  setReceiveMethods = () => {
-    // ローカルストレージがなければ初期化して保存
-    if (!localStorage.getItem("ReceiveMethods")) {
-      let receiveMethods = JSON.parse("[]");
-      localStorage.setItem("ReceiveMethods", receiveMethods);
-    }
-
-    let json = localStorage.getItem("ReceiveMethods");
-    let receiveMethods = JSON.parse(json);
-    this.setState({receiveMethods: receiveMethods});
-  }
-
   saveSendMethods = () => {
     let sendMethods = this.state.sendMethods;
     let json = JSON.stringify(sendMethods);
     localStorage.setItem("SendMethods", json);
   }
+
   saveReceiveMethods = () => {
     let receiveMethods = this.state.receiveMethods;
     let json = JSON.stringify(receiveMethods);
     localStorage.setItem("ReceiveMethods", json);
   }
 
-  toISOStringWithTimezone(date) {
-    var tzo = -date.getTimezoneOffset(),
-        dif = tzo >= 0 ? '+' : '-',
-        pad = function(num) {
-            var norm = Math.floor(Math.abs(num));
-            return (norm < 10 ? '0' : '') + norm;
-        };
-
-    return date.getFullYear() +
-        '-' + pad(date.getMonth() + 1) +
-        '-' + pad(date.getDate()) +
-        'T' + pad(date.getHours()) +
-        ':' + pad(date.getMinutes()) +
-        ':' + pad(date.getSeconds()) +
-        '.' + pad(date.getMilliseconds()) +
-        dif + pad(tzo / 60) +
-        ':' + pad(tzo % 60);
-  }
-
   addAndSaveLog = (message) => {
     let logs = this.state.logs;
     let now = new Date();
-    logs.push({datetime: this.toISOStringWithTimezone(now), message: message});
+    logs.push({datetime: toISOStringWithTimezone(now), message: message});
     this.setState({logs: logs});
 
     let json = JSON.stringify(logs);
@@ -575,28 +376,19 @@ export default class App extends Component {
     return (
       <>
         <Toaster position="top-right" />
+
         <Header
           setStateFromLocalStorage={this.setStateFromLocalStorage}
         />
 
         <div className="url">
-          <InputGroup className="mb-3">
-            <FormControl
-              placeholder="SignalR hub URL"
-              value={this.state.url}
-              onChange={this.handleChangeUrl}
-            />
-            {!this.state.isConnecting &&
-              <Button variant="primary" type="button" onClick={() => this.handleConnect(this.state.url)}>
-                Connect
-              </Button>
-            }
-            {this.state.isConnecting &&
-              <Button variant="outline-danger" type="button" onClick={this.handleDisconnect}>
-                Disconnect
-              </Button>
-            }
-          </InputGroup>
+          <Url
+            url={this.state.url}
+            isConnecting={this.state.isConnecting}
+            handleChangeUrl={(event) => this.handleChangeUrl(event)}
+            handleConnect={this.handleConnect}
+            handleDisconnect={this.handleDisconnect}
+          />
         </div>
 
         <div className="send-and-receive">
@@ -692,19 +484,10 @@ export default class App extends Component {
         </div>
 
         <div className="logs">
-            <h4>
-              Logs
-              <Button className="stick-button" variant="outline-warning" size="sm" onClick={this.handleClearLogs}>
-                Clear
-              </Button>
-            </h4>
-            <div>
-              <ListGroup>
-                {this.state.logs.reverse().map((log ,index) => 
-                  <ListGroup.Item key={index}>{log.datetime} : {log.message}</ListGroup.Item>
-                )}
-              </ListGroup>
-            </div>
+          <Log
+            logs={this.state.logs}
+            setStateFromLocalStorage={this.setStateFromLocalStorage}
+          />
         </div>
 
         <Modal size="lg" show={this.state.showModal} onHide={this.handleCloseModal}>
