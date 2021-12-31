@@ -74,7 +74,7 @@ function ObjectInSendMethod(props) {
       &nbsp;
       </>
       </Col>
-      <Col xs="auto">
+      <Col>
         {props.properties.map((property, propertyIndex) => {
           let propertyIndexes = [ ...props.propertyIndexes ];
           propertyIndexes.push(propertyIndex);
@@ -85,7 +85,7 @@ function ObjectInSendMethod(props) {
                 <Col xs="auto">
                   {property.name} ( {property.type} )
                 </Col>
-                <Col xs="auto">
+                <Col>
                   {property.type !== "object" &&
                     <Form.Control type="text" placeholder="Input value" value={property.value} onChange={(e) => props.handleChangeArgPropertyValue(e, props.methodIndex, props.argIndex, propertyIndexes)} />
                   }
@@ -580,7 +580,7 @@ export default class App extends Component {
         {
           name: "message",
           type: "string",
-          value: ""
+          value: "Hello, SignalR."
         }
       ]
     });
@@ -590,17 +590,17 @@ export default class App extends Component {
         {
           name: "group",
           type: "string",
-          value: ""
+          value: "tutorial group"
         },
         {
           name: "user",
           type: "string",
-          value: ""
+          value: "guest"
         },
         {
           name: "message",
           type: "string",
-          value: ""
+          value: "Hello everyone, this is guest."
         }
       ]
     });
@@ -610,7 +610,7 @@ export default class App extends Component {
         {
           name: "group",
           type: "string",
-          value: ""
+          value: "tutorial group"
         }
       ]
     });
@@ -620,7 +620,7 @@ export default class App extends Component {
         {
           name: "group",
           type: "string",
-          value: ""
+          value: "tutorial group"
         }
       ]
     });
@@ -634,12 +634,12 @@ export default class App extends Component {
             {
               name: "value1",
               type: "string",
-              value: ""
+              value: "object1"
             },
             {
               name: "value2",
               type: "int",
-              value: 0
+              value: 1
             }
           ]
         }
@@ -651,7 +651,7 @@ export default class App extends Component {
         {
           name: "number",
           type: "int",
-          value: 0
+          value: 100
         }
       ]
     });
@@ -732,7 +732,7 @@ export default class App extends Component {
         <Toaster position="top-right" />
         <Navbar  bg="primary" variant="dark">
           <Container>
-            <Navbar.Brand href="/">SignalRGuy</Navbar.Brand>
+            <Navbar.Brand href="/">SignalRGuy <i>α</i></Navbar.Brand>
             <Navbar.Toggle aria-controls="basic-navbar-nav" />
             <Navbar.Collapse id="basic-navbar-nav">
               <Nav className="me-auto">
@@ -766,16 +766,16 @@ export default class App extends Component {
 
         <div className="send-and-receive">
           <div className="methods">
-            <h2>
+            <h4>
               Send Methods
               <Button className="stick-button" variant="info" size="sm" onClick={() => this.handleShowModal(-1, true)} disabled={this.state.isConnecting}>
                 Add
               </Button>
-            </h2>
+            </h4>
             <div className="method-content">
               {this.state.sendMethods.map((method, methodIndex) => 
                 <Card key={methodIndex} className="card">
-                  <Card.Header as="h3">
+                  <Card.Header as="h5">
                     {method.name}
                     <Button className="stick-button" variant="success" size="sm" onClick={() => this.handleShowModal(methodIndex, true)} disabled={this.state.isConnecting}>
                       Edit
@@ -791,7 +791,7 @@ export default class App extends Component {
                           <Col xs="auto">
                             {arg.name} ( {arg.type} )
                           </Col>
-                          <Col xs="auto">
+                          <Col>
                             {arg.type !== "object" &&
                               <Form.Control type="text" placeholder="Input value" value={arg.value} onChange={(e) => this.handleChangeArgValue(e, methodIndex, argIndex)} />
                             }
@@ -819,16 +819,16 @@ export default class App extends Component {
             </div>
           </div>
           <div className="methods">
-            <h2>
+            <h4>
               Receive Methods
               <Button className="stick-button" variant="info" size="sm" onClick={() => this.handleShowModal(-1, false)} disabled={this.state.isConnecting}>
                 Add
               </Button>
-            </h2>
+            </h4>
             <div className="method-content">
               {this.state.receiveMethods.map((method, methodIndex) => 
                 <Card key={methodIndex} className="card">
-                  <Card.Header as="h3">
+                  <Card.Header as="h5">
                     {method.name}
                     <Button className="stick-button" variant="success" size="sm" onClick={() => this.handleShowModal(methodIndex, false)} disabled={this.state.isConnecting}>
                       Edit
