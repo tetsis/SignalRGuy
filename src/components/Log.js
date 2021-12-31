@@ -20,7 +20,7 @@ export class Log extends Component {
         </h4>
         <div>
         <ListGroup>
-            {this.props.logs.reverse().map((log ,index) => 
+            {this.props.logs.map((log ,index) => 
             <ListGroup.Item key={index}>{log.datetime} : {log.message}</ListGroup.Item>
             )}
         </ListGroup>

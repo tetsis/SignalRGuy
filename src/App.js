@@ -365,7 +365,7 @@ export default class App extends Component {
   addAndSaveLog = (message) => {
     let logs = this.state.logs;
     let now = new Date();
-    logs.push({datetime: toISOStringWithTimezone(now), message: message});
+    logs.unshift({datetime: toISOStringWithTimezone(now), message: message});
     this.setState({logs: logs});
 
     let json = JSON.stringify(logs);
