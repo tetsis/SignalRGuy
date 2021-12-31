@@ -571,7 +571,7 @@ export default class App extends Component {
   }
 
   handleApplingTutorialSettings = () => {
-    let url = "https://tutorialhub.signalrguy.com/testHub";
+    let url = "https://signalrserver20211231135855.azurewebsites.net/tutorialHub";
 
     let sendMethods = [];
     sendMethods.push({
