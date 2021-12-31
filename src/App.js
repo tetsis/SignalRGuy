@@ -3,7 +3,7 @@ import './App.css';
 import {
   HubConnectionBuilder,
 } from '@microsoft/signalr';
-import { Container, Row, Col, Form, Button, Modal, ListGroup, InputGroup, FormControl, Card, Toast, ToastContainer } from 'react-bootstrap';
+import { Container, Row, Col, Form, Button, Modal, ListGroup, InputGroup, FormControl, Card, Toast, ToastContainer, Navbar, Nav, NavDropdown } from 'react-bootstrap';
 import { TrashFill, Plus } from 'react-bootstrap-icons';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
@@ -156,7 +156,7 @@ export default class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      url: "https://localhost:44338/testHub",
+      url: "",
       isConnecting: false,
       showModal: false,
       modalAddOrEdit: true,
@@ -173,6 +173,9 @@ export default class App extends Component {
 
   componentDidMount() {
     // ローカルストレージがなければ初期化して保存
+    if (!localStorage.getItem("Url")) {
+      localStorage.setItem("Url", "");
+    }
     if (!localStorage.getItem("SendMethods")) {
       localStorage.setItem("SendMethods", "[]");
     }
@@ -184,6 +187,13 @@ export default class App extends Component {
     }
 
     // ローカルストレージから情報を取得
+    this.setStateFromLocalStorage();
+  }
+
+  setStateFromLocalStorage() {
+    let url = localStorage.getItem("Url");
+    this.setState({url: url});
+
     let sendJson = localStorage.getItem("SendMethods");
     let sendMethods = JSON.parse(sendJson);
     this.setState({sendMethods: sendMethods});
@@ -202,6 +212,9 @@ export default class App extends Component {
   }
 
   async handleConnect(url) {
+    // ローカルストレージにURLを保存
+    localStorage.setItem("Url", url);
+
     const connection = new HubConnectionBuilder()
       .withUrl(url)
       //.withAutomaticReconnect()
@@ -492,7 +505,6 @@ export default class App extends Component {
 
     let json = JSON.stringify(logs);
     localStorage.setItem("Logs", json);
-
   }
 
   setSendMethods = () => {
@@ -558,12 +570,181 @@ export default class App extends Component {
     localStorage.setItem("Logs", json);
   }
 
+  handleApplingTutorialSettings = () => {
+    let url = "https://tutorialhub.signalrguy.com/testHub";
+
+    let sendMethods = [];
+    sendMethods.push({
+      name: "SendMessage",
+      args: [
+        {
+          name: "message",
+          type: "string",
+          value: ""
+        }
+      ]
+    });
+    sendMethods.push({
+      name: "SendMessageToGroup",
+      args: [
+        {
+          name: "group",
+          type: "string",
+          value: ""
+        },
+        {
+          name: "user",
+          type: "string",
+          value: ""
+        },
+        {
+          name: "message",
+          type: "string",
+          value: ""
+        }
+      ]
+    });
+    sendMethods.push({
+      name: "JoinToGroup",
+      args: [
+        {
+          name: "group",
+          type: "string",
+          value: ""
+        }
+      ]
+    });
+    sendMethods.push({
+      name: "LeaveFromGroup",
+      args: [
+        {
+          name: "group",
+          type: "string",
+          value: ""
+        }
+      ]
+    });
+    sendMethods.push({
+      name: "SendObject",
+      args: [
+        {
+          name: "object1",
+          type: "object",
+          properties: [
+            {
+              name: "value1",
+              type: "string",
+              value: ""
+            },
+            {
+              name: "value2",
+              type: "int",
+              value: 0
+            }
+          ]
+        }
+      ]
+    });
+    sendMethods.push({
+      name: "SendNumber",
+      args: [
+        {
+          name: "number",
+          type: "int",
+          value: 0
+        }
+      ]
+    });
+
+    let receiveMethods = [];
+    receiveMethods.push({
+      name: "ReceiveMessage",
+      args: [
+        {
+          name: "message",
+          type: "string"
+        }
+      ]
+    });
+    receiveMethods.push({
+      name: "ReceiveMessageFromGroup",
+      args: [
+        {
+          name: "group",
+          type: "string"
+        },
+        {
+          name: "user",
+          type: "string"
+        },
+        {
+          name: "message",
+          type: "string"
+        }
+      ]
+    });
+    receiveMethods.push({
+      name: "ReceiveObject",
+      args: [
+        {
+          name: "object1",
+          type: "object",
+          properties: [
+            {
+              name: "value1",
+              type: "string"
+            },
+            {
+              name: "value2",
+              type: "int"
+            }
+          ]
+        }
+      ]
+    });
+    receiveMethods.push({
+      name: "ReceiveNumber",
+      args: [
+        {
+          name: "number",
+          type: "int"
+        }
+      ]
+    });
+
+    this.setState({url: url});
+    localStorage.setItem("Url", url);
+
+    this.setState({sendMethods: sendMethods});
+    this.saveSendMethods();
+
+    this.setState({receiveMethods: receiveMethods});
+    this.saveReceiveMethods();
+
+    this.handleClearLogs();
+  }
+
   render() {
     return (
       <>
+      <Navbar  bg="primary" variant="dark">
+    <Container>
+      <Navbar.Brand href="/">SignalRGuy</Navbar.Brand>
+      <Navbar.Toggle aria-controls="basic-navbar-nav" />
+      <Navbar.Collapse id="basic-navbar-nav">
+        <Nav className="me-auto">
+          <NavDropdown title="Actions" id="basic-nav-dropdown">
+            <NavDropdown.Item onClick={this.handleApplingTutorialSettings}>Apply tutorial values</NavDropdown.Item>
+          </NavDropdown>
+        </Nav>
+      </Navbar.Collapse>
+    </Container>
+  </Navbar>
+
         <div className="url">
           <InputGroup className="mb-3">
             <FormControl
+              placeholder="SignalR hub URL"
               value={this.state.url}
               onChange={this.handleChangeUrl}
             />
