@@ -3,9 +3,154 @@ import './App.css';
 import {
   HubConnectionBuilder,
 } from '@microsoft/signalr';
-import { Container, Row, Col, Form, Button, Modal, ListGroup } from 'react-bootstrap';
-import { TrashFill } from 'react-bootstrap-icons';
+import { Container, Row, Col, Form, Button, Modal, ListGroup, InputGroup, FormControl, Card, Toast, ToastContainer } from 'react-bootstrap';
+import { TrashFill, Plus } from 'react-bootstrap-icons';
 import 'bootstrap/dist/css/bootstrap.min.css';
+
+function ObjectInModal(props) {
+  return (
+    <Row>
+      <Col xs="auto">
+      <>
+      &nbsp;
+      </>
+      </Col>
+      <Col xs="auto">
+        {props.properties.map((property, propertyIndex) => {
+          let propertyIndexes = [ ...props.propertyIndexes ];
+          propertyIndexes.push(propertyIndex);
+
+          return (
+            <>
+              <Row className="mb-3">
+                <Col xs="auto">
+                  <Form.Control type="text" placeholder="Input argument name" value={property.name} onChange={(e) => props.handleChangePropName(e, props.argIndex, propertyIndexes)} />
+                </Col>
+                <Col xs="auto">
+                  <Form.Select defaultValue={property.type} onChange={(e) => props.handleChangePropType(e, props.argIndex, propertyIndexes)}>
+                    <option value="string">string</option>
+                    <option value="int">int</option>
+                    <option value="bool">bool</option>
+                    <option value="DateTime">DateTime</option>
+                    <option value="object">object</option>
+                  </Form.Select>
+                </Col>
+                <Col xs="auto">
+                  {property.type === "object" &&
+                    <Button variant="info" type="button" onClick={() => props.handleAddProperty(props.argIndex, propertyIndexes)}>
+                      <Plus/>
+                    </Button>
+                  }
+                  <Button variant="danger" type="button" onClick={() => props.handleDeleteProp(props.argIndex, propertyIndexes)}>
+                    <TrashFill/>
+                  </Button>
+                </Col>
+              </Row>
+              {property.type === "object" &&
+                <ObjectInModal
+                  argIndex={props.argIndex}
+                  properties={property.properties}
+                  propertyIndexes={propertyIndexes}
+                  handleChangePropName={(event, argIndex, propertyIndexes) => props.handleChangePropName(event, argIndex, propertyIndexes)}
+                  handleChangePropType={(event, argIndex, propertyIndexes) => props.handleChangePropType(event, argIndex, propertyIndexes)}
+                  handleAddProperty={(argIndex, propertyIndexes) => props.handleAddProperty(argIndex, propertyIndexes)}
+                  handleDeleteProp={(argIndex, propertyIndexes) => props.handleDeleteProp(argIndex, propertyIndexes)}
+                />
+              }
+            </>
+          )
+        })}
+      </Col>
+    </Row>
+  );
+}
+
+function ObjectInSendMethod(props) {
+  return (
+    <Row>
+      <Col xs="auto">
+      <>
+      &nbsp;
+      </>
+      </Col>
+      <Col xs="auto">
+        {props.properties.map((property, propertyIndex) => {
+          let propertyIndexes = [ ...props.propertyIndexes ];
+          propertyIndexes.push(propertyIndex);
+
+          return (
+            <div key={propertyIndex}>
+              <Row key={propertyIndex} className="mb-3">
+                <Col xs="auto">
+                  {property.name} ( {property.type} )
+                </Col>
+                <Col xs="auto">
+                  {property.type !== "object" &&
+                    <Form.Control type="text" placeholder="Input value" value={property.value} onChange={(e) => props.handleChangeArgPropertyValue(e, props.methodIndex, props.argIndex, propertyIndexes)} />
+                  }
+                </Col>
+              </Row>
+              {property.type === "object" &&
+                <ObjectInSendMethod
+                  methodIndex={props.methodIndex}
+                  argIndex={props.argIndex}
+                  properties={property.properties}
+                  propertyIndexes={propertyIndexes}
+                  handleChangeArgPropertyValue={(event, methodIndex, argIndex, propertyIndexes) => props.handleChangeArgPropertyValue(event, methodIndex, argIndex, propertyIndexes)}
+                />
+              }
+            </div>
+          );
+        })}
+      </Col>
+    </Row>
+  );
+}
+
+function ObjectInReceiveMethod(props) {
+  return (
+    <Row>
+      <Col xs="auto">
+      <>
+      &nbsp;
+      </>
+      </Col>
+      <Col xs="auto">
+        {props.properties.map((property, propertyIndex) => 
+          <div key={propertyIndex}>
+            <Row key={propertyIndex} className="mb-3">
+              <Col xs="auto">
+                {property.name} ( {property.type} )
+              </Col>
+            </Row>
+            {property.type === "object" &&
+              <ObjectInReceiveMethod
+                properties={property.properties}
+              />
+            }
+          </div>
+        )}
+      </Col>
+    </Row>
+  );
+}
+
+function DisplayNotify(props) {
+  return (
+    <ToastContainer position="top-end">
+
+      <Toast>
+        <Toast.Header>
+          <img src="holder.js/20x20?text=%20" className="rounded me-2" alt="" />
+          <strong className="me-auto">Bootstrap</strong>
+          <small className="text-muted">just now</small>
+        </Toast.Header>
+        <Toast.Body>See? Just like this.</Toast.Body>
+      </Toast>
+
+    </ToastContainer>
+  );
+}
 
 export default class App extends Component {
   constructor(props) {
@@ -80,13 +225,11 @@ export default class App extends Component {
       });
 
       this.state.receiveMethods.forEach(method => {
-        connection.on(method.name, (...args) => {
+        connection.on(method.name, (...data) => {
           console.log("Receive: ");
-          console.log(method.name, args);
-          this.addAndSaveLog("Receive. Method: " + method.name + ", Args: " + args);
-          for (let i = 0; i < method.args.length; i++) {
-            console.log(method.args[i].name, args[i]);
-          }
+          console.log(method.name, data);
+          this.addAndSaveLog("Receive. Method: " + method.name + ", Args: " + this.toStringData(method.args, data));
+          this.render(<DisplayNotify />);
         });
       });
     });
@@ -97,14 +240,35 @@ export default class App extends Component {
     this.addAndSaveLog("Disconnecting to " + this.state.url);
   }
 
+  convertSendingData(arg) {
+    if (arg.type === "int") {
+      return parseInt(arg.value, 10);
+    }
+    else if (arg.type === "object") {
+      return Object.fromEntries(arg.properties.map((p) => [p.name, this.convertSendingData(p)]));
+    }
+    else {
+      return arg.value;
+    }
+  }
+
+  toStringData(args, data) {
+    let result = [];
+    for (let i = 0; i < args.length; i++) {
+      result.push(args[i].name + ":" + JSON.stringify(data[i]));
+    }
+    return result;
+    //return arg.name + ":" + JSON.stringify(this.convertSendingData(arg));
+  }
+
   handleSend(index) {
     let method = this.state.sendMethods[index];
 
     try {
-      this.state.connection.invoke(method.name, ...method.args.map(arg => arg.value));
+      this.state.connection.invoke(method.name, ...method.args.map(arg => this.convertSendingData(arg)));
       console.log("Send: ");
-      console.log(method.name, ...method.args.map(arg => arg.value));
-      this.addAndSaveLog("Send. Method: " + method.name + ", Args: " + method.args.map(arg => arg.value));
+      console.log(method.name, method.args.map(arg => this.convertSendingData(arg)));
+      this.addAndSaveLog("Send. Method: " + method.name + ", Args: " + this.toStringData(method.args, method.args.map(arg => this.convertSendingData(arg))));
     } catch (err) {
       console.error(err);
     }
@@ -117,8 +281,8 @@ export default class App extends Component {
       this.setState({methodNameInModal: "", methodArgsInModal: [{name: "", type: "string"}], modalAddOrEdit: true, modalIndex: -1});
     }
     else {
-      let method = this.state.sendMethods[index];
-      let args = method.args.map((obj) => Object.assign({},obj));
+      let method = modalSendOrReceive ? this.state.sendMethods[index] : this.state.receiveMethods[index];
+      let args = JSON.parse(JSON.stringify(method.args));
       this.setState({methodNameInModal: method.name, methodArgsInModal: args, modalAddOrEdit: false, modalIndex: index});
     }
 
@@ -139,6 +303,29 @@ export default class App extends Component {
     this.setState({methodArgsInModal: args});
   }
 
+  handleAddProperty = (argIndex, propertyIndexes) => {
+    let args = this.state.methodArgsInModal;
+    let arg = args[argIndex];
+    let properties = arg.properties;
+    for (let i = 0; i < propertyIndexes.length; i++) {
+      properties = properties[propertyIndexes[i]].properties;
+    }
+    properties.push({name: "", type: "string"});
+    console.log(args);
+    this.setState({methodArgsInModal: args});
+  }
+
+  handleDeleteProp = (argIndex, propertyIndexes) => {
+    let args = this.state.methodArgsInModal;
+    let arg = args[argIndex];
+    let properties = arg.properties;
+    for (let i = 0; i < propertyIndexes.length - 1; i++) {
+      properties = properties[propertyIndexes[i]].properties;
+    }
+    properties.splice(propertyIndexes[propertyIndexes.length - 1], 1);
+    this.setState({methodArgsInModal: args});
+  }
+
   handleChangeMethodName = (event) => {
     this.setState({methodNameInModal: event.target.value});
   }
@@ -152,7 +339,50 @@ export default class App extends Component {
   handleChangeArgType = (event, index) => {
     let args = this.state.methodArgsInModal;
     args[index].type = event.target.value;
+    if (event.target.value === "object") {
+      args[index].properties = [];
+      delete args[index].value;
+    }
+    else {
+      delete args[index].properties;
+    }
     this.setState({methodArgsInModal: args});
+  }
+
+  handleChangePropName = (event, argIndex, propertyIndexes) => {
+    let args = this.state.methodArgsInModal;
+    let arg = args[argIndex];
+    let properties = arg.properties;
+    for (let i = 0; i < propertyIndexes.length - 1; i++) {
+      properties = properties[propertyIndexes[i]].properties;
+    }
+    properties[propertyIndexes[propertyIndexes.length - 1]].name = event.target.value;
+    this.setState({methodArgsInModal: args});
+  }
+
+  handleChangePropType = (event, argIndex, propertyIndexes) => {
+    let args = this.state.methodArgsInModal;
+    let arg = args[argIndex];
+    let properties = arg.properties;
+    for (let i = 0; i < propertyIndexes.length - 1; i++) {
+      properties = properties[propertyIndexes[i]].properties;
+    }
+    properties[propertyIndexes[propertyIndexes.length - 1]].type = event.target.value;
+    if (event.target.value === "object") {
+      properties[propertyIndexes[propertyIndexes.length - 1]].properties = [];
+      delete properties[propertyIndexes[propertyIndexes.length - 1]].value;
+    }
+    this.setState({methodArgsInModal: args});
+  }
+
+  checkArrayName(array) {
+    let filtered = array.filter(item => item.name.match(/^[A-Za-z0-9]+$/));
+    array.forEach(item => {
+      if ("properties" in item) {
+        item.properties = this.checkArrayName(item.properties);
+      }
+    });
+    return filtered;
   }
 
   handleAddMethod = () => {
@@ -166,7 +396,7 @@ export default class App extends Component {
 
     // 名前が条件に合うもののみ使う
     let args = this.state.methodArgsInModal;
-    let filteredArgs = args.filter(e => e.name.match(/^[A-Za-z0-9]+$/));
+    let filteredArgs = this.checkArrayName(args);
 
     methods.push({name: this.state.methodNameInModal, args: filteredArgs});
 
@@ -216,7 +446,7 @@ export default class App extends Component {
 
     // 名前が条件に合うもののみ使う
     let args = this.state.methodArgsInModal;
-    let filteredArgs = args.filter(e => e.name.match(/^[A-Za-z0-9]+$/));
+    let filteredArgs = this.checkArrayName(args);
 
     methods[this.state.modalIndex] = {name: this.state.methodNameInModal, args: filteredArgs};
 
@@ -238,6 +468,31 @@ export default class App extends Component {
     this.setState({sendMethods: sendMethods});
 
     this.saveSendMethods();
+  }
+
+  handleChangeArgPropertyValue = (event, methodIndex, argIndex, propertyIndexes) => {
+    let sendMethods = this.state.sendMethods;
+    let sendMethod = sendMethods[methodIndex];
+    let args = sendMethod.args;
+    let arg = args[argIndex];
+    let properties = arg.properties;
+    for (let i = 0; i < propertyIndexes.length - 1; i++) {
+      properties = properties[propertyIndexes[i]].properties;
+    }
+    properties[propertyIndexes[propertyIndexes.length - 1]].value = event.target.value;
+    this.setState({sendMethods: sendMethods});
+
+    this.saveSendMethods();
+  }
+
+  handleClearLogs = () => {
+    let logs = this.state.logs;
+    logs = [];
+    this.setState({logs: logs});
+
+    let json = JSON.stringify(logs);
+    localStorage.setItem("Logs", json);
+
   }
 
   setSendMethods = () => {
@@ -274,10 +529,29 @@ export default class App extends Component {
     localStorage.setItem("ReceiveMethods", json);
   }
 
+  toISOStringWithTimezone(date) {
+    var tzo = -date.getTimezoneOffset(),
+        dif = tzo >= 0 ? '+' : '-',
+        pad = function(num) {
+            var norm = Math.floor(Math.abs(num));
+            return (norm < 10 ? '0' : '') + norm;
+        };
+
+    return date.getFullYear() +
+        '-' + pad(date.getMonth() + 1) +
+        '-' + pad(date.getDate()) +
+        'T' + pad(date.getHours()) +
+        ':' + pad(date.getMinutes()) +
+        ':' + pad(date.getSeconds()) +
+        '.' + pad(date.getMilliseconds()) +
+        dif + pad(tzo / 60) +
+        ':' + pad(tzo % 60);
+  }
+
   addAndSaveLog = (message) => {
     let logs = this.state.logs;
     let now = new Date();
-    logs.push({datetime: now.toISOString(), message: message});
+    logs.push({datetime: this.toISOStringWithTimezone(now), message: message});
     this.setState({logs: logs});
 
     let json = JSON.stringify(logs);
@@ -287,177 +561,222 @@ export default class App extends Component {
   render() {
     return (
       <>
-      <Container>
-        <Row>
-          <Form>
-            <Row>
-              <Col>
-                <Form.Control type="text" placeholder="https://localhost:44338/testHub" value={this.state.url} onChange={this.handleChangeUrl} />
-              </Col>
-              <Col md="2">
-                {!this.state.isConnecting &&
-                  <Button variant="primary" type="button" onClick={() => this.handleConnect(this.state.url)}>
-                    Connect
-                  </Button>
-                }
-                {this.state.isConnecting &&
-                  <Button variant="outline-danger" type="button" onClick={this.handleDisconnect}>
-                    Disconnect
-                  </Button>
-                }
-              </Col>
-            </Row>
-          </Form>
-        </Row>
-        <Row>
-          <Col>
+        <div className="url">
+          <InputGroup className="mb-3">
+            <FormControl
+              value={this.state.url}
+              onChange={this.handleChangeUrl}
+            />
+            {!this.state.isConnecting &&
+              <Button variant="primary" type="button" onClick={() => this.handleConnect(this.state.url)}>
+                Connect
+              </Button>
+            }
+            {this.state.isConnecting &&
+              <Button variant="outline-danger" type="button" onClick={this.handleDisconnect}>
+                Disconnect
+              </Button>
+            }
+          </InputGroup>
+        </div>
+
+        <div className="send-and-receive">
+          <div className="methods">
             <h2>
               Send Methods
-              <Button variant="info" size="sm" onClick={() => this.handleShowModal(-1, true)} disabled={this.state.isConnecting}>
+              <Button className="stick-button" variant="info" size="sm" onClick={() => this.handleShowModal(-1, true)} disabled={this.state.isConnecting}>
                 Add
               </Button>
             </h2>
-            {this.state.sendMethods.map((method, methodIndex) => 
-            <>
-              <h3 key={methodIndex}>
-                {method.name}
-                <Button variant="success" size="sm" onClick={() => this.handleShowModal(methodIndex, true)} disabled={this.state.isConnecting}>
-                  Edit
-                </Button>
-              </h3>
-              <h4>
-                Args
-              </h4>
-              {method.args.map((arg, argIndex) =>
-                <Form>
-                  <Form.Group as={Row} key={argIndex}>
-                    <Form.Label column xs="4">
-                      {arg.name} ( {arg.type} )
-                    </Form.Label>
-                    <Col xs="8">
-                      <Form.Control type="text" placeholder="Input value" value={arg.value} onChange={(e) => this.handleChangeArgValue(e, methodIndex, argIndex)} />
-                    </Col>
-                  </Form.Group>
-                </Form>
+            <div className="method-content">
+              {this.state.sendMethods.map((method, methodIndex) => 
+                <Card key={methodIndex} className="card">
+                  <Card.Header as="h3">
+                    {method.name}
+                    <Button className="stick-button" variant="success" size="sm" onClick={() => this.handleShowModal(methodIndex, true)} disabled={this.state.isConnecting}>
+                      Edit
+                    </Button>
+                  </Card.Header>
+                  <Card.Body>
+                    <Form>
+                      <Form.Group as={Row}>
+                      {method.args.map((arg, argIndex) =>
+
+                      <Container key={argIndex}>
+                        <Row className="mb-3">
+                          <Col xs="auto">
+                            {arg.name} ( {arg.type} )
+                          </Col>
+                          <Col xs="auto">
+                            {arg.type !== "object" &&
+                              <Form.Control type="text" placeholder="Input value" value={arg.value} onChange={(e) => this.handleChangeArgValue(e, methodIndex, argIndex)} />
+                            }
+                          </Col>
+                        </Row>
+                        {arg.type === "object" &&
+                          <ObjectInSendMethod
+                            methodIndex={methodIndex}
+                            argIndex={argIndex}
+                            properties={arg.properties}
+                            propertyIndexes={[]}
+                            handleChangeArgPropertyValue={(event, methodIndex, argIndex, propertyIndexes) => this.handleChangeArgPropertyValue(event, methodIndex, argIndex, propertyIndexes)}
+                          />
+                        }
+                      </Container>
+                      )}
+                      </Form.Group>
+                    </Form>
+                    <Button onClick={() => this.handleSend(methodIndex)} disabled={!this.state.isConnecting}>
+                      Send
+                    </Button>
+                  </Card.Body>
+                </Card>
               )}
-              <Button onClick={() => this.handleSend(methodIndex)} disabled={!this.state.isConnecting}>
-                Send
-              </Button>
-            </>
-            )}
-          </Col>
-          <Col>
+            </div>
+          </div>
+          <div className="methods">
             <h2>
               Receive Methods
-              <Button variant="info" size="sm" onClick={() => this.handleShowModal(-1, false)} disabled={this.state.isConnecting}>
+              <Button className="stick-button" variant="info" size="sm" onClick={() => this.handleShowModal(-1, false)} disabled={this.state.isConnecting}>
                 Add
               </Button>
             </h2>
-            {this.state.receiveMethods.map((method, methodIndex) => 
-            <>
-              <h3 key={methodIndex}>
-                {method.name}
-                <Button variant="success" size="sm" onClick={() => this.handleShowModal(methodIndex, false)} disabled={this.state.isConnecting}>
-                  Edit
-                </Button>
-              </h3>
-              <h4>
-                Args
-              </h4>
-              {method.args.map((arg, argIndex) =>
-                <Form key={argIndex}>
-                  <Form.Group as={Row}>
-                    <Form.Label column xs="4">
-                      {arg.name} ( {arg.type} )
-                    </Form.Label>
-                  </Form.Group>
-                </Form>
+            <div className="method-content">
+              {this.state.receiveMethods.map((method, methodIndex) => 
+                <Card key={methodIndex} className="card">
+                  <Card.Header as="h3">
+                    {method.name}
+                    <Button className="stick-button" variant="success" size="sm" onClick={() => this.handleShowModal(methodIndex, false)} disabled={this.state.isConnecting}>
+                      Edit
+                    </Button>
+                  </Card.Header>
+                  <Card.Body>
+                    {method.args.map((arg, argIndex) =>
+                      <Container key={argIndex}>
+                        <Row className="mb-3">
+                          <Col xs="auto">
+                            {arg.name} ( {arg.type} )
+                          </Col>
+                        </Row>
+                        {arg.type === "object" &&
+                          <ObjectInReceiveMethod
+                            properties={arg.properties}
+                          />
+                        }
+                      </Container>
+                    )}
+                  </Card.Body>
+                </Card>
               )}
-            </>
-            )}
-          </Col>
-        </Row>
+            </div>
+          </div>
+        </div>
 
-        <Row>
-          <Col>
-            <h2>Logs</h2>
-            <ListGroup style={{ display: 'flex' }}>
-              {this.state.logs.map((log ,index) => 
-                <ListGroup.Item key={index} style={{order: -index}}>{log.datetime} : {log.message}</ListGroup.Item>
-              )}
-            </ListGroup>
-          </Col>
-        </Row>
+        <div className="logs">
+            <h2>
+              Logs
+              <Button className="stick-button" variant="outline-warning" size="sm" onClick={this.handleClearLogs}>
+                Clear
+              </Button>
 
-      </Container>
 
-      <Modal show={this.state.showModal} onHide={this.handleCloseModal}>
-        <Modal.Header closeButton>
-          <Modal.Title>
-            {this.state.modalSendOrReceive &&
-              <> Send </>
-            }
-            {!this.state.modalSendOrReceive &&
-              <> Receive </>
-            }
-            Method</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
 
-          <Form>
-            <Form.Group className="mb-3">
-              <Form.Label>Method name</Form.Label>
-              <Form.Control type="text" placeholder="Input method name" value={this.state.methodNameInModal} onChange={this.handleChangeMethodName} />
-            </Form.Group>
-            <Form.Group>
-              <Form.Label>
-                Args
-                <Button variant="info" size="sm" onClick={this.handleAddArg}>Add</Button>
-              </Form.Label>
-                {this.state.methodArgsInModal.map((arg, index) => 
-                  <Row key={index}>
-                    <Col md="6">
-                      <Form.Control type="text" placeholder="Input argument name" value={arg.name} onChange={(e) => this.handleChangeArgName(e, index)}/>
-                    </Col>
-                    <Col md="4">
-                      <Form.Select defaultValue={arg.type} onChange={(e) => this.handleChangeArgType(e, index)}>
-                        <option value="string">string</option>
-                        <option value="int">int</option>
-                        <option value="bool">bool</option>
-                        <option value="DateTime">DateTime</option>
-                      </Form.Select>
-                    </Col>
-                    <Col md="2">
-                      <Button variant="danger" type="button" onClick={() => this.handleDeleteArg(index)}>
-                        <TrashFill/>
-                      </Button>
-                    </Col>
-                  </Row>
+            </h2>
+            <div>
+              <ListGroup>
+                {this.state.logs.reverse().map((log ,index) => 
+                  <ListGroup.Item key={index}>{log.datetime} : {log.message}</ListGroup.Item>
                 )}
-            </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={this.handleCloseModal}>
-            Close
-          </Button>
-          {!this.state.modalAddOrEdit &&
-            <Button variant="danger" onClick={this.handleDeleteMethod}>
-              Delete
+              </ListGroup>
+            </div>
+        </div>
+
+        <Modal size="lg" show={this.state.showModal} onHide={this.handleCloseModal}>
+          <Modal.Header closeButton>
+            <Modal.Title>
+              {this.state.modalSendOrReceive &&
+                <> Send </>
+              }
+              {!this.state.modalSendOrReceive &&
+                <> Receive </>
+              }
+              Method</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+
+            <Form>
+              <Form.Group className="mb-3">
+                <Form.Label>Method name</Form.Label>
+                <Form.Control type="text" placeholder="Input method name" value={this.state.methodNameInModal} onChange={this.handleChangeMethodName} />
+              </Form.Group>
+              <Form.Group>
+                <Form.Label>
+                  Args
+                  <Button variant="info" size="sm" onClick={this.handleAddArg}>Add</Button>
+                </Form.Label>
+                {this.state.methodArgsInModal.map((arg, argIndex) => 
+                  <Container key={argIndex}>
+                    <Row className="mb-3">
+                      <Col xs="auto">
+                        <Form.Control type="text" placeholder="Input argument name" value={arg.name} onChange={(e) => this.handleChangeArgName(e, argIndex)}/>
+                      </Col>
+                      <Col xs="auto">
+                        <Form.Select defaultValue={arg.type} onChange={(e) => this.handleChangeArgType(e, argIndex)}>
+                          <option value="string">string</option>
+                          <option value="int">int</option>
+                          <option value="bool">bool</option>
+                          <option value="DateTime">DateTime</option>
+                          <option value="object">object</option>
+                        </Form.Select>
+                      </Col>
+                      <Col xs="auto">
+                        {arg.type === "object" &&
+                          <Button variant="info" type="button" onClick={() => this.handleAddProperty(argIndex, [])}>
+                            <Plus/>
+                          </Button>
+                        }
+                        <Button variant="danger" type="button" onClick={() => this.handleDeleteArg(argIndex)}>
+                          <TrashFill/>
+                        </Button>
+                      </Col>
+                    </Row>
+                    {arg.type === "object" &&
+                      <ObjectInModal
+                        argIndex={argIndex}
+                        properties={arg.properties}
+                        propertyIndexes={[]}
+                        handleChangePropName={(event, argIndex, propertyIndexes) => this.handleChangePropName(event, argIndex, propertyIndexes)}
+                        handleChangePropType={(event, argIndex, propertyIndexes) => this.handleChangePropType(event, argIndex, propertyIndexes)}
+                        handleAddProperty={(argIndex, propertyIndexes) => this.handleAddProperty(argIndex, propertyIndexes)}
+                        handleDeleteProp={(argIndex, propertyIndexes) => this.handleDeleteProp(argIndex, propertyIndexes)}
+                      />
+                    }
+                  </Container>
+                )}
+              </Form.Group>
+            </Form>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={this.handleCloseModal}>
+              Close
             </Button>
-          }
-          {!this.state.modalAddOrEdit &&
-            <Button variant="success" onClick={this.handleEditMethod}>
-              Edit
-            </Button>
-          }
-          {this.state.modalAddOrEdit &&
-            <Button variant="info" onClick={this.handleAddMethod}>
-              Add
-            </Button>
-          }
-        </Modal.Footer>
-      </Modal>
+            {!this.state.modalAddOrEdit &&
+              <Button variant="danger" onClick={this.handleDeleteMethod}>
+                Delete
+              </Button>
+            }
+            {!this.state.modalAddOrEdit &&
+              <Button variant="success" onClick={this.handleEditMethod}>
+                Edit
+              </Button>
+            }
+            {this.state.modalAddOrEdit &&
+              <Button variant="info" onClick={this.handleAddMethod}>
+                Add
+              </Button>
+            }
+          </Modal.Footer>
+        </Modal>
       </>
     );
   }

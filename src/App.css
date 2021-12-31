@@ -1,5 +1,6 @@
 .App {
   text-align: center;
+  padding: 10;
 }
 
 .App-logo {
@@ -15,7 +16,6 @@
 
 .App-header {
   background-color: #282c34;
-  min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -35,4 +35,33 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+
+.stick-button {
+  margin-left: 20px;
+}
+
+.url {
+  margin: 20px auto;
+  width: 70%;
+}
+
+.send-and-receive {
+  display: flex;
+  width: 100%;
+}
+
+.methods {
+  margin-left: 40px;
+  margin-right: 40px;
+  width: 50%;
+}
+
+.card {
+  margin: 20px;
+}
+
+.logs {
+  margin: 20px;
 }
