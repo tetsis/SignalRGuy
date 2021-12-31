@@ -3,10 +3,11 @@ import './App.css';
 import {
   HubConnectionBuilder,
 } from '@microsoft/signalr';
-import { Container, Row, Col, Form, Button, Modal, ListGroup, InputGroup, FormControl, Card, Navbar, Nav, NavDropdown, Badge } from 'react-bootstrap';
+import { Container, Row, Col, Form, Button, Modal, ListGroup, InputGroup, FormControl, Card, Badge } from 'react-bootstrap';
 import { TrashFill, Plus } from 'react-bootstrap-icons';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import toast, { Toaster } from 'react-hot-toast'
+import toast, { Toaster } from 'react-hot-toast';
+import { Header } from './components/Header';
 
 function ObjectInModal(props) {
   return (
@@ -174,7 +175,7 @@ export default class App extends Component {
     this.setStateFromLocalStorage();
   }
 
-  setStateFromLocalStorage() {
+  setStateFromLocalStorage = () => {
     let url = localStorage.getItem("Url");
     this.setState({url: url});
 
@@ -570,179 +571,13 @@ export default class App extends Component {
     localStorage.setItem("Logs", json);
   }
 
-  handleApplingTutorialSettings = () => {
-    let url = "https://signalrserver20211231135855.azurewebsites.net/tutorialHub";
-
-    let sendMethods = [];
-    sendMethods.push({
-      name: "SendMessage",
-      args: [
-        {
-          name: "message",
-          type: "string",
-          value: "Hello, SignalR."
-        }
-      ]
-    });
-    sendMethods.push({
-      name: "SendMessageToGroup",
-      args: [
-        {
-          name: "group",
-          type: "string",
-          value: "tutorial group"
-        },
-        {
-          name: "user",
-          type: "string",
-          value: "guest"
-        },
-        {
-          name: "message",
-          type: "string",
-          value: "Hello everyone, this is guest."
-        }
-      ]
-    });
-    sendMethods.push({
-      name: "JoinToGroup",
-      args: [
-        {
-          name: "group",
-          type: "string",
-          value: "tutorial group"
-        }
-      ]
-    });
-    sendMethods.push({
-      name: "LeaveFromGroup",
-      args: [
-        {
-          name: "group",
-          type: "string",
-          value: "tutorial group"
-        }
-      ]
-    });
-    sendMethods.push({
-      name: "SendObject",
-      args: [
-        {
-          name: "object1",
-          type: "object",
-          properties: [
-            {
-              name: "value1",
-              type: "string",
-              value: "object1"
-            },
-            {
-              name: "value2",
-              type: "int",
-              value: 1
-            }
-          ]
-        }
-      ]
-    });
-    sendMethods.push({
-      name: "SendNumber",
-      args: [
-        {
-          name: "number",
-          type: "int",
-          value: 100
-        }
-      ]
-    });
-
-    let receiveMethods = [];
-    receiveMethods.push({
-      name: "ReceiveMessage",
-      args: [
-        {
-          name: "message",
-          type: "string"
-        }
-      ]
-    });
-    receiveMethods.push({
-      name: "ReceiveMessageFromGroup",
-      args: [
-        {
-          name: "group",
-          type: "string"
-        },
-        {
-          name: "user",
-          type: "string"
-        },
-        {
-          name: "message",
-          type: "string"
-        }
-      ]
-    });
-    receiveMethods.push({
-      name: "ReceiveObject",
-      args: [
-        {
-          name: "object1",
-          type: "object",
-          properties: [
-            {
-              name: "value1",
-              type: "string"
-            },
-            {
-              name: "value2",
-              type: "int"
-            }
-          ]
-        }
-      ]
-    });
-    receiveMethods.push({
-      name: "ReceiveNumber",
-      args: [
-        {
-          name: "number",
-          type: "int"
-        }
-      ]
-    });
-
-    this.setState({url: url});
-    localStorage.setItem("Url", url);
-
-    let sendJson = JSON.stringify(sendMethods);
-    localStorage.setItem("SendMethods", sendJson);
-
-    let receiveJson = JSON.stringify(receiveMethods);
-    localStorage.setItem("ReceiveMethods", receiveJson);
-
-    this.handleClearLogs();
-
-    this.setStateFromLocalStorage();
-  }
-
   render() {
     return (
       <>
         <Toaster position="top-right" />
-        <Navbar  bg="primary" variant="dark">
-          <Container>
-            <Navbar.Brand href="/">SignalRGuy <i>α</i></Navbar.Brand>
-            <Navbar.Toggle aria-controls="basic-navbar-nav" />
-            <Navbar.Collapse id="basic-navbar-nav">
-              <Nav className="me-auto">
-                <NavDropdown title="Actions" id="basic-nav-dropdown">
-                  <NavDropdown.Item onClick={this.handleApplingTutorialSettings}>Apply tutorial values</NavDropdown.Item>
-                </NavDropdown>
-              </Nav>
-            </Navbar.Collapse>
-          </Container>
-        </Navbar>
+        <Header
+          setStateFromLocalStorage={this.setStateFromLocalStorage}
+        />
 
         <div className="url">
           <InputGroup className="mb-3">
@@ -857,15 +692,12 @@ export default class App extends Component {
         </div>
 
         <div className="logs">
-            <h2>
+            <h4>
               Logs
               <Button className="stick-button" variant="outline-warning" size="sm" onClick={this.handleClearLogs}>
                 Clear
               </Button>
-
-
-
-            </h2>
+            </h4>
             <div>
               <ListGroup>
                 {this.state.logs.reverse().map((log ,index) => 
@@ -896,7 +728,7 @@ export default class App extends Component {
               <Form.Group>
                 <Form.Label>
                   Args
-                  <Button variant="info" size="sm" onClick={this.handleAddArg}>Add</Button>
+                  <Button className="stick-button" variant="info" size="sm" onClick={this.handleAddArg}>Add</Button>
                 </Form.Label>
                 {this.state.methodArgsInModal.map((arg, argIndex) => 
                   <Container key={argIndex}>
