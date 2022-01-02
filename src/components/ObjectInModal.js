@@ -19,10 +19,10 @@ export class ObjectInModal extends Component {
               <div key={propertyIndex}>
                 <Row className="mb-3">
                   <Col xs="auto">
-                    <Form.Control type="text" placeholder="Input argument name" value={property.name} onChange={(e) => this.props.handleChangePropName(e, this.props.argIndex, propertyIndexes)} />
+                    <Form.Control type="text" placeholder="Input argument name" value={property.name} onChange={(e) => this.props.handleChangePropertyName(e, property)} />
                   </Col>
                   <Col xs="auto">
-                    <Form.Select defaultValue={property.type} onChange={(e) => this.props.handleChangePropType(e, this.props.argIndex, propertyIndexes)}>
+                    <Form.Select defaultValue={property.type} onChange={(e) => this.props.handleChangePropertyType(e, property)}>
                       <option value="string">string</option>
                       <option value="int">int</option>
                       <option value="bool">bool</option>
@@ -32,11 +32,11 @@ export class ObjectInModal extends Component {
                   </Col>
                   <Col xs="auto">
                     {property.type === "object" &&
-                      <Button variant="info" type="button" onClick={() => this.props.handleAddProperty(this.props.argIndex, propertyIndexes)}>
+                      <Button variant="info" type="button" onClick={() => this.props.handleAddProperty(property.properties)}>
                         <Plus/>
                       </Button>
                     }
-                    <Button variant="danger" type="button" onClick={() => this.props.handleDeleteProp(this.props.argIndex, propertyIndexes)}>
+                    <Button variant="danger" type="button" onClick={() => this.props.handleDeleteProperty(this.props.properties, propertyIndex)}>
                       <TrashFill/>
                     </Button>
                   </Col>
@@ -46,10 +46,10 @@ export class ObjectInModal extends Component {
                     argIndex={this.props.argIndex}
                     properties={property.properties}
                     propertyIndexes={propertyIndexes}
-                    handleChangePropName={(event, argIndex, propertyIndexes) => this.props.handleChangePropName(event, argIndex, propertyIndexes)}
-                    handleChangePropType={(event, argIndex, propertyIndexes) => this.props.handleChangePropType(event, argIndex, propertyIndexes)}
-                    handleAddProperty={(argIndex, propertyIndexes) => this.props.handleAddProperty(argIndex, propertyIndexes)}
-                    handleDeleteProp={(argIndex, propertyIndexes) => this.props.handleDeleteProp(argIndex, propertyIndexes)}
+                    handleChangePropertyName={(event, property) => this.props.handleChangePropertyName(event, property)}
+                    handleChangePropertyType={(event, property) => this.props.handleChangePropertyType(event, property)}
+                    handleAddProperty={(properties) => this.props.handleAddProperty(properties)}
+                    handleDeleteProperty={(properties, index) => this.props.handleDeleteProperty(properties, index)}
                   />
                 }
               </div>

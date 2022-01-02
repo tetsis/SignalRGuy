@@ -180,97 +180,74 @@ export default class App extends Component {
     this.setState({methodArgsInModal: args});
   }
 
-  handleAddProperty = (argIndex, propertyIndexes) => {
-    let args = this.state.methodArgsInModal;
-    let arg = args[argIndex];
-    let properties = arg.properties;
-    for (let i = 0; i < propertyIndexes.length; i++) {
-      properties = properties[propertyIndexes[i]].properties;
-    }
+  handleAddProperty = (properties) => {
     properties.push({name: "", type: "string"});
-    console.log(args);
-    this.setState({methodArgsInModal: args});
+    this.setState({methodArgsInModal: this.state.methodArgsInModal});
   }
 
-  handleDeleteProp = (argIndex, propertyIndexes) => {
-    let args = this.state.methodArgsInModal;
-    let arg = args[argIndex];
-    let properties = arg.properties;
-    for (let i = 0; i < propertyIndexes.length - 1; i++) {
-      properties = properties[propertyIndexes[i]].properties;
-    }
-    properties.splice(propertyIndexes[propertyIndexes.length - 1], 1);
-    this.setState({methodArgsInModal: args});
+  handleDeleteProperty = (properties, index) => {
+    properties.splice(index, 1);
+    this.setState({methodArgsInModal: this.state.methodArgsInModal});
   }
 
   handleChangeMethodName = (event) => {
     this.setState({methodNameInModal: event.target.value});
   }
 
-  handleChangeArgName = (event, index) => {
-    let args = this.state.methodArgsInModal;
-    args[index].name = event.target.value;
-    this.setState({methodArgsInModal: args});
+  handleChangeArgName = (event, arg) => {
+    arg.name = event.target.value;
+    this.setState({methodArgsInModal: this.state.methodArgsInModal});
   }
 
-  handleChangeArgType = (event, index) => {
-    let args = this.state.methodArgsInModal;
-    args[index].type = event.target.value;
+  handleChangeArgType = (event, arg) => {
+    arg.type = event.target.value;
+
     if (event.target.value === "object") {
-      args[index].properties = [];
-      delete args[index].value;
+      arg.properties = [];
+      delete arg.value;
     }
     else {
-      delete args[index].properties;
+      delete arg.properties;
     }
 
     if (event.target.value === "array") {
-      args[index].array = {
+      arg.array = {
         type: "string"
       };
     }
     else {
-      delete args[index].array;
+      delete arg.array;
     }
 
-    this.setState({methodArgsInModal: args});
+    this.setState({methodArgsInModal: this.state.methodArgsInModal});
   }
 
-  handleChangePropName = (event, argIndex, propertyIndexes) => {
-    let args = this.state.methodArgsInModal;
-    let arg = args[argIndex];
-    let properties = arg.properties;
-    for (let i = 0; i < propertyIndexes.length - 1; i++) {
-      properties = properties[propertyIndexes[i]].properties;
-    }
-    properties[propertyIndexes[propertyIndexes.length - 1]].name = event.target.value;
-    this.setState({methodArgsInModal: args});
+  handleChangePropertyName = (event, property) => {
+    property.name = event.target.value;
+    this.setState({methodArgsInModal: this.state.methodArgsInModal});
   }
 
-  handleChangePropType = (event, argIndex, propertyIndexes) => {
-    let args = this.state.methodArgsInModal;
-    let arg = args[argIndex];
-    let properties = arg.properties;
-    for (let i = 0; i < propertyIndexes.length - 1; i++) {
-      properties = properties[propertyIndexes[i]].properties;
-    }
-    properties[propertyIndexes[propertyIndexes.length - 1]].type = event.target.value;
+  handleChangePropertyType = (event, property) => {
+    property.type = event.target.value;
+
     if (event.target.value === "object") {
-      properties[propertyIndexes[propertyIndexes.length - 1]].properties = [];
-      delete properties[propertyIndexes[propertyIndexes.length - 1]].value;
+      property.properties = [];
+      delete property.value;
     }
     else {
-      delete properties[propertyIndexes[propertyIndexes.length - 1]].properties;
+      delete property.properties;
     }
 
     if (event.target.value === "array") {
-      properties[propertyIndexes[propertyIndexes.length - 1]].array = {};
+      property.array = {
+        type: "string"
+      };
     }
     else {
-      delete properties[propertyIndexes[propertyIndexes.length - 1]].array;
+      delete property.array;
     }
 
-    this.setState({methodArgsInModal: args});
+    this.setState({methodArgsInModal: this.state.methodArgsInModal});
   }
 
   handleChangeArrayType = (event, argIndex, depth) => {
@@ -555,10 +532,10 @@ export default class App extends Component {
                   <Container key={argIndex}>
                     <Row className="mb-3">
                       <Col xs="auto">
-                        <Form.Control type="text" placeholder="Input argument name" value={arg.name} onChange={(e) => this.handleChangeArgName(e, argIndex)}/>
+                        <Form.Control type="text" placeholder="Input argument name" value={arg.name} onChange={(e) => this.handleChangeArgName(e, arg)}/>
                       </Col>
                       <Col xs="auto">
-                        <Form.Select defaultValue={arg.type} onChange={(e) => this.handleChangeArgType(e, argIndex)}>
+                        <Form.Select defaultValue={arg.type} onChange={(e) => this.handleChangeArgType(e, arg)}>
                           <option value="string">string</option>
                           <option value="int">int</option>
                           <option value="bool">bool</option>
@@ -577,7 +554,7 @@ export default class App extends Component {
                       }
                       <Col xs="auto">
                         {arg.type === "object" &&
-                          <Button variant="info" type="button" onClick={() => this.handleAddProperty(argIndex, [])}>
+                          <Button variant="info" type="button" onClick={() => this.handleAddProperty(arg.properties)}>
                             <Plus/>
                           </Button>
                         }
@@ -591,10 +568,10 @@ export default class App extends Component {
                         argIndex={argIndex}
                         properties={arg.properties}
                         propertyIndexes={[]}
-                        handleChangePropName={(event, argIndex, propertyIndexes) => this.handleChangePropName(event, argIndex, propertyIndexes)}
-                        handleChangePropType={(event, argIndex, propertyIndexes) => this.handleChangePropType(event, argIndex, propertyIndexes)}
-                        handleAddProperty={(argIndex, propertyIndexes) => this.handleAddProperty(argIndex, propertyIndexes)}
-                        handleDeleteProp={(argIndex, propertyIndexes) => this.handleDeleteProp(argIndex, propertyIndexes)}
+                        handleChangePropertyName={(event, property) => this.handleChangePropertyName(event, property)}
+                        handleChangePropertyType={(event, property) => this.handleChangePropertyType(event, property)}
+                        handleAddProperty={(properties) => this.handleAddProperty(properties)}
+                        handleDeleteProperty={(properties, index) => this.handleDeleteProperty(properties, index)}
                       />
                     }
                   </Container>
