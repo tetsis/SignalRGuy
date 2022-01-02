@@ -309,11 +309,11 @@ export default class App extends Component {
     methods.push({name: this.state.methodNameInModal, args: filteredArgs});
 
     if (this.state.modalSendOrReceive) {
-      this.setState({sendMethods: methods});
+      //this.setState({sendMethods: methods});
       this.saveSendMethods();
     }
     else {
-      this.setState({receiveMethods: methods});
+      //this.setState({receiveMethods: methods});
       this.saveReceiveMethods();
     }
 
@@ -332,11 +332,11 @@ export default class App extends Component {
     methods.splice(this.state.modalIndex, 1);
 
     if (this.state.modalSendOrReceive) {
-      this.setState({sendMethods: methods});
+      //this.setState({sendMethods: methods});
       this.saveSendMethods();
     }
     else {
-      this.setState({receiveMethods: methods});
+      //this.setState({receiveMethods: methods});
       this.saveReceiveMethods();
     }
 
@@ -359,11 +359,11 @@ export default class App extends Component {
     methods[this.state.modalIndex] = {name: this.state.methodNameInModal, args: filteredArgs};
 
     if (this.state.modalSendOrReceive) {
-      this.setState({sendMethods: methods});
+      //this.setState({sendMethods: methods});
       this.saveSendMethods();
     }
     else {
-      this.setState({receiveMethods: methods});
+      //this.setState({receiveMethods: methods});
       this.saveReceiveMethods();
     }
 
