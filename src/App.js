@@ -13,6 +13,7 @@ import { Log } from './components/Log';
 import { ObjectInModal } from './components/ObjectInModal';
 import { ObjectInSendMethod } from './components/ObjectInSendMethod';
 import { ObjectInReceiveMethod } from './components/ObjectInReceiveMethod';
+import { ArrayInModal } from './components/ArrayInModal';
 import toISOStringWithTimezone from './functions/toISOStringWithTimezone';
 import checkValidName from './functions/checkValidName';
 import toStringData from './functions/toStringData';
@@ -108,7 +109,8 @@ export default class App extends Component {
         connection.on(method.name, (...data) => {
           console.log("Receive: ");
           console.log(method.name, data);
-          this.addAndSaveLog("Receive. Method: " + method.name + ", Args: " + toStringData(method.args, data));
+          let message = "Receive. Method: " + method.name + ", Args: " + toStringData(method.args, data)
+          this.addAndSaveLog(message);
 
           toast(() => (
             <span>
@@ -221,6 +223,16 @@ export default class App extends Component {
     else {
       delete args[index].properties;
     }
+
+    if (event.target.value === "array") {
+      args[index].array = {
+        type: "string"
+      };
+    }
+    else {
+      delete args[index].array;
+    }
+
     this.setState({methodArgsInModal: args});
   }
 
@@ -247,6 +259,37 @@ export default class App extends Component {
       properties[propertyIndexes[propertyIndexes.length - 1]].properties = [];
       delete properties[propertyIndexes[propertyIndexes.length - 1]].value;
     }
+    else {
+      delete properties[propertyIndexes[propertyIndexes.length - 1]].properties;
+    }
+
+    if (event.target.value === "array") {
+      properties[propertyIndexes[propertyIndexes.length - 1]].array = {};
+    }
+    else {
+      delete properties[propertyIndexes[propertyIndexes.length - 1]].array;
+    }
+
+    this.setState({methodArgsInModal: args});
+  }
+
+  handleChangeArrayType = (event, argIndex, depth) => {
+    let args = this.state.methodArgsInModal;
+    let arg = args[argIndex];
+    let array = arg.array;
+    for (let i = 0; i < depth - 1; i++) {
+      array = array.array;
+    }
+
+    array.type = event.target.value;
+
+    if (event.target.value === "array") {
+      array.array = {};
+    }
+    else {
+      delete array.array;
+    }
+
     this.setState({methodArgsInModal: args});
   }
 
@@ -409,21 +452,18 @@ export default class App extends Component {
                     </Button>
                   </Card.Header>
                   <Card.Body>
-                    <Form>
-                      <Form.Group as={Row}>
                       {method.args.map((arg, argIndex) =>
-
-                      <Container key={argIndex}>
-                        <Row className="mb-3">
-                          <Col xs="auto">
+                      <div key={argIndex}>
+                        <Form.Group as={Row} className="mb-3">
+                          <Form.Label column xs="auto">
                             {arg.name} ( {arg.type} )
-                          </Col>
+                          </Form.Label>
                           <Col>
                             {arg.type !== "object" &&
                               <Form.Control type="text" placeholder="Input value" value={arg.value} onChange={(e) => this.handleChangeArgValue(e, methodIndex, argIndex)} />
                             }
                           </Col>
-                        </Row>
+                        </Form.Group>
                         {arg.type === "object" &&
                           <ObjectInSendMethod
                             methodIndex={methodIndex}
@@ -433,10 +473,8 @@ export default class App extends Component {
                             handleChangeArgPropertyValue={(event, methodIndex, argIndex, propertyIndexes) => this.handleChangeArgPropertyValue(event, methodIndex, argIndex, propertyIndexes)}
                           />
                         }
-                      </Container>
+                      </div>
                       )}
-                      </Form.Group>
-                    </Form>
                     <Button onClick={() => this.handleSend(methodIndex)} disabled={!this.state.isConnecting}>
                       Send
                     </Button>
@@ -526,8 +564,17 @@ export default class App extends Component {
                           <option value="bool">bool</option>
                           <option value="DateTime">DateTime</option>
                           <option value="object">object</option>
+                          <option value="array">array</option>
                         </Form.Select>
                       </Col>
+                      {arg.type === "array" &&
+                        <ArrayInModal
+                          argIndex={argIndex}
+                          array={arg.array}
+                          depth={1}
+                          handleChangeArrayType={(event, argIndex, depth) => this.handleChangeArrayType(event, argIndex, depth)}
+                        />
+                      }
                       <Col xs="auto">
                         {arg.type === "object" &&
                           <Button variant="info" type="button" onClick={() => this.handleAddProperty(argIndex, [])}>

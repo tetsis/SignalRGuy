@@ -17,16 +17,16 @@ export class ObjectInSendMethod extends Component {
 
             return (
               <div key={propertyIndex}>
-                <Row key={propertyIndex} className="mb-3">
-                  <Col xs="auto">
+                <Form.Group as={Row} className="mb-3">
+                  <Form.Label column xs="auto">
                     {property.name} ( {property.type} )
-                  </Col>
+                  </Form.Label>
                   <Col>
                     {property.type !== "object" &&
                       <Form.Control type="text" placeholder="Input value" value={property.value} onChange={(e) => this.props.handleChangeArgPropertyValue(e, this.props.methodIndex, this.props.argIndex, propertyIndexes)} />
                     }
                   </Col>
-                </Row>
+                </Form.Group>
                 {property.type === "object" &&
                   <ObjectInSendMethod
                     methodIndex={this.props.methodIndex}

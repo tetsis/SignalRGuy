@@ -159,7 +159,7 @@ export class Header extends Component {
     return (
     <Navbar  bg="primary" variant="dark">
       <Container>
-      <Navbar.Brand href="/">SignalRGuy <i>α</i></Navbar.Brand>
+      <Navbar.Brand href="/">SignalR Guy <i>α</i></Navbar.Brand>
       <Navbar.Toggle aria-controls="basic-navbar-nav" />
       <Navbar.Collapse id="basic-navbar-nav">
         <Nav className="me-auto">
