@@ -66,7 +66,7 @@ export class Header extends Component {
             {
               name: "value1",
               type: "string",
-              value: "object1"
+              value: "value1"
             },
             {
               name: "value2",

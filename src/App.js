@@ -18,6 +18,9 @@ import toISOStringWithTimezone from './functions/toISOStringWithTimezone';
 import checkValidName from './functions/checkValidName';
 import toStringData from './functions/toStringData';
 import convertSendingData from './functions/convertSendingData';
+import toStringArrayType from './functions/toStringArrayType';
+import getArrayContentType from './functions/getArrayContentType';
+import getArrayContentObject from './functions/getArrayContentObject';
 
 export default class App extends Component {
   constructor(props) {
@@ -475,13 +478,33 @@ export default class App extends Component {
                       <Container key={argIndex}>
                         <Row className="mb-3">
                           <Col xs="auto">
-                            {arg.name} ( {arg.type} )
+                            {arg.name} (
+                              {arg.type !== "array" &&
+                                <>
+                                  {arg.type}
+                                </>
+                              }
+                              {arg.type === "array" &&
+                                <>
+                                  {toStringArrayType(arg.array)}
+                                </>
+                              }
+                            )
                           </Col>
                         </Row>
                         {arg.type === "object" &&
                           <ObjectInReceiveMethod
                             properties={arg.properties}
                           />
+                        }
+                        {arg.type === "array" &&
+                          <>
+                            {getArrayContentType(arg.array) === "object" &&
+                              <ObjectInReceiveMethod
+                                properties={getArrayContentObject(arg.array).properties}
+                              />
+                            }
+                          </>
                         }
                       </Container>
                     )}
