@@ -19,9 +19,6 @@ export class ObjectInModal extends Component {
               <div key={propertyIndex}>
                 <Row className="mb-3">
                   <Col xs="auto">
-                    <Form.Control type="text" placeholder="Input argument name" value={property.name} onChange={(e) => this.props.handleChangePropertyName(e, property)} />
-                  </Col>
-                  <Col xs="auto">
                     <Form.Select defaultValue={property.type} onChange={(e) => this.props.handleChangePropertyType(e, property)}>
                       <option value="string">string</option>
                       <option value="int">int</option>
@@ -29,6 +26,9 @@ export class ObjectInModal extends Component {
                       <option value="DateTime">DateTime</option>
                       <option value="object">object</option>
                     </Form.Select>
+                  </Col>
+                  <Col xs="auto">
+                    <Form.Control type="text" placeholder="Input argument name" value={property.name} onChange={(e) => this.props.handleChangePropertyName(e, property)} />
                   </Col>
                   <Col xs="auto">
                     {property.type === "object" &&

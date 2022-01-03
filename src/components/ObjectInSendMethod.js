@@ -23,7 +23,7 @@ export class ObjectInSendMethod extends Component {
                   </Form.Label>
                   <Col>
                     {property.type !== "object" &&
-                      <Form.Control type="text" placeholder="Input value" value={property.value} onChange={(e) => this.props.handleChangeArgPropertyValue(e, this.props.methodIndex, this.props.argIndex, propertyIndexes)} />
+                      <Form.Control type="text" placeholder="Input value" value={property.value} onChange={(e) => this.props.handleChangeArgPropertyValue(e, property)} />
                     }
                   </Col>
                 </Form.Group>
@@ -33,7 +33,7 @@ export class ObjectInSendMethod extends Component {
                     argIndex={this.props.argIndex}
                     properties={property.properties}
                     propertyIndexes={propertyIndexes}
-                    handleChangeArgPropertyValue={(event, methodIndex, argIndex, propertyIndexes) => this.props.handleChangeArgPropertyValue(event, methodIndex, argIndex, propertyIndexes)}
+                    handleChangeArgPropertyValue={(event, property) => this.props.handleChangeArgPropertyValue(event, property)}
                   />
                 }
               </div>

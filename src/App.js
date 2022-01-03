@@ -250,24 +250,27 @@ export default class App extends Component {
     this.setState({methodArgsInModal: this.state.methodArgsInModal});
   }
 
-  handleChangeArrayType = (event, argIndex, depth) => {
-    let args = this.state.methodArgsInModal;
-    let arg = args[argIndex];
-    let array = arg.array;
-    for (let i = 0; i < depth - 1; i++) {
-      array = array.array;
-    }
-
+  handleChangeArrayType = (event, array) => {
     array.type = event.target.value;
 
+    if (event.target.value === "object") {
+      array.properties = [];
+      delete array.value;
+    }
+    else {
+      delete array.properties;
+    }
+
     if (event.target.value === "array") {
-      array.array = {};
+      array.array = {
+        type: "string"
+      };
     }
     else {
       delete array.array;
     }
 
-    this.setState({methodArgsInModal: args});
+    this.setState({methodArgsInModal: this.state.methodArgsInModal});
   }
 
   handleAddMethod = () => {
@@ -347,25 +350,16 @@ export default class App extends Component {
     this.handleCloseModal();
   }
   
-  handleChangeArgValue = (event, methodIndex, argIndex) => {
-    let sendMethods = this.state.sendMethods;
-    sendMethods[methodIndex].args[argIndex].value = event.target.value;
-    this.setState({sendMethods: sendMethods});
+  handleChangeArgValue = (event, arg) => {
+    arg.value = event.target.value;
+    this.setState({sendMethods: this.state.sendMethods});
 
     this.saveSendMethods();
   }
 
-  handleChangeArgPropertyValue = (event, methodIndex, argIndex, propertyIndexes) => {
-    let sendMethods = this.state.sendMethods;
-    let sendMethod = sendMethods[methodIndex];
-    let args = sendMethod.args;
-    let arg = args[argIndex];
-    let properties = arg.properties;
-    for (let i = 0; i < propertyIndexes.length - 1; i++) {
-      properties = properties[propertyIndexes[i]].properties;
-    }
-    properties[propertyIndexes[propertyIndexes.length - 1]].value = event.target.value;
-    this.setState({sendMethods: sendMethods});
+  handleChangeArgPropertyValue = (event, property) => {
+    property.value = event.target.value;
+    this.setState({sendMethods: this.state.sendMethods});
 
     this.saveSendMethods();
   }
@@ -437,7 +431,7 @@ export default class App extends Component {
                           </Form.Label>
                           <Col>
                             {arg.type !== "object" &&
-                              <Form.Control type="text" placeholder="Input value" value={arg.value} onChange={(e) => this.handleChangeArgValue(e, methodIndex, argIndex)} />
+                              <Form.Control type="text" placeholder="Input value" value={arg.value} onChange={(e) => this.handleChangeArgValue(e, arg)} />
                             }
                           </Col>
                         </Form.Group>
@@ -447,7 +441,7 @@ export default class App extends Component {
                             argIndex={argIndex}
                             properties={arg.properties}
                             propertyIndexes={[]}
-                            handleChangeArgPropertyValue={(event, methodIndex, argIndex, propertyIndexes) => this.handleChangeArgPropertyValue(event, methodIndex, argIndex, propertyIndexes)}
+                            handleChangeArgPropertyValue={(event, property) => this.handleChangeArgPropertyValue(event, property)}
                           />
                         }
                       </div>
@@ -532,9 +526,6 @@ export default class App extends Component {
                   <Container key={argIndex}>
                     <Row className="mb-3">
                       <Col xs="auto">
-                        <Form.Control type="text" placeholder="Input argument name" value={arg.name} onChange={(e) => this.handleChangeArgName(e, arg)}/>
-                      </Col>
-                      <Col xs="auto">
                         <Form.Select defaultValue={arg.type} onChange={(e) => this.handleChangeArgType(e, arg)}>
                           <option value="string">string</option>
                           <option value="int">int</option>
@@ -544,12 +535,15 @@ export default class App extends Component {
                           <option value="array">array</option>
                         </Form.Select>
                       </Col>
+                      <Col xs="auto">
+                        <Form.Control type="text" placeholder="Input argument name" value={arg.name} onChange={(e) => this.handleChangeArgName(e, arg)}/>
+                      </Col>
                       {arg.type === "array" &&
                         <ArrayInModal
                           argIndex={argIndex}
                           array={arg.array}
                           depth={1}
-                          handleChangeArrayType={(event, argIndex, depth) => this.handleChangeArrayType(event, argIndex, depth)}
+                          handleChangeArrayType={(event, array) => this.handleChangeArrayType(event, array)}
                         />
                       }
                       <Col xs="auto">
