@@ -538,14 +538,6 @@ export default class App extends Component {
                       <Col xs="auto">
                         <Form.Control type="text" placeholder="Input argument name" value={arg.name} onChange={(e) => this.handleChangeArgName(e, arg)}/>
                       </Col>
-                      {arg.type === "array" &&
-                        <ArrayInModal
-                          argIndex={argIndex}
-                          array={arg.array}
-                          depth={1}
-                          handleChangeArrayType={(event, array) => this.handleChangeArrayType(event, array)}
-                        />
-                      }
                       <Col xs="auto">
                         {arg.type === "object" &&
                           <Button variant="info" type="button" onClick={() => this.handleAddProperty(arg.properties)}>
@@ -559,13 +551,22 @@ export default class App extends Component {
                     </Row>
                     {arg.type === "object" &&
                       <ObjectInModal
-                        argIndex={argIndex}
                         properties={arg.properties}
-                        propertyIndexes={[]}
                         handleChangePropertyName={(event, property) => this.handleChangePropertyName(event, property)}
                         handleChangePropertyType={(event, property) => this.handleChangePropertyType(event, property)}
                         handleAddProperty={(properties) => this.handleAddProperty(properties)}
                         handleDeleteProperty={(properties, index) => this.handleDeleteProperty(properties, index)}
+                        handleChangeArrayType={(event, array) => this.handleChangeArrayType(event, array)}
+                      />
+                    }
+                    {arg.type === "array" &&
+                      <ArrayInModal
+                        array={arg.array}
+                        handleChangePropertyName={(event, property) => this.handleChangePropertyName(event, property)}
+                        handleChangePropertyType={(event, property) => this.handleChangePropertyType(event, property)}
+                        handleAddProperty={(properties) => this.handleAddProperty(properties)}
+                        handleDeleteProperty={(properties, index) => this.handleDeleteProperty(properties, index)}
+                        handleChangeArrayType={(event, array) => this.handleChangeArrayType(event, array)}
                       />
                     }
                   </Container>

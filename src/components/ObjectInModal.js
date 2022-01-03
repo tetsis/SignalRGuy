@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { Row, Col, Form, Button } from 'react-bootstrap';
 import { TrashFill, Plus } from 'react-bootstrap-icons';
+import { ArrayInModal } from './ArrayInModal';
 
 export class ObjectInModal extends Component {
   render() {
@@ -13,8 +14,6 @@ export class ObjectInModal extends Component {
         </Col>
         <Col xs="auto">
           {this.props.properties.map((property, propertyIndex) => {
-            let propertyIndexes = [ ...this.props.propertyIndexes ];
-            propertyIndexes.push(propertyIndex);
             return (
               <div key={propertyIndex}>
                 <Row className="mb-3">
@@ -25,6 +24,7 @@ export class ObjectInModal extends Component {
                       <option value="bool">bool</option>
                       <option value="DateTime">DateTime</option>
                       <option value="object">object</option>
+                      <option value="array">array</option>
                     </Form.Select>
                   </Col>
                   <Col xs="auto">
@@ -43,13 +43,22 @@ export class ObjectInModal extends Component {
                 </Row>
                 {property.type === "object" &&
                   <ObjectInModal
-                    argIndex={this.props.argIndex}
                     properties={property.properties}
-                    propertyIndexes={propertyIndexes}
                     handleChangePropertyName={(event, property) => this.props.handleChangePropertyName(event, property)}
                     handleChangePropertyType={(event, property) => this.props.handleChangePropertyType(event, property)}
                     handleAddProperty={(properties) => this.props.handleAddProperty(properties)}
                     handleDeleteProperty={(properties, index) => this.props.handleDeleteProperty(properties, index)}
+                    handleChangeArrayType={(event, array) => this.props.handleChangeArrayType(event, array)}
+                  />
+                }
+                {property.type === "array" &&
+                  <ArrayInModal
+                    array={property.array}
+                    handleChangePropertyName={(event, property) => this.props.handleChangePropertyName(event, property)}
+                    handleChangePropertyType={(event, property) => this.props.handleChangePropertyType(event, property)}
+                    handleAddProperty={(properties) => this.props.handleAddProperty(properties)}
+                    handleDeleteProperty={(properties, index) => this.props.handleDeleteProperty(properties, index)}
+                    handleChangeArrayType={(event, array) => this.props.handleChangeArrayType(event, array)}
                   />
                 }
               </div>
