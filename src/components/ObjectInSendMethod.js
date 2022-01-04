@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { Row, Col, Form } from 'react-bootstrap';
+import toStringArrayType from '../functions/toStringArrayType';
 
 export class ObjectInSendMethod extends Component {
   render() {
@@ -19,7 +20,18 @@ export class ObjectInSendMethod extends Component {
               <div key={propertyIndex}>
                 <Form.Group as={Row} className="mb-3">
                   <Form.Label column xs="auto">
-                    {property.name} ( {property.type} )
+                    {property.name} (
+                      {property.type !== "array" &&
+                        <>
+                          {property.type}
+                        </>
+                      }
+                      {property.type === "array" &&
+                        <>
+                          {toStringArrayType(property.array)}
+                        </>
+                      }
+                    )
                   </Form.Label>
                   <Col>
                     {property.type !== "object" &&

@@ -430,7 +430,18 @@ export default class App extends Component {
                       <div key={argIndex}>
                         <Form.Group as={Row} className="mb-3">
                           <Form.Label column xs="auto">
-                            {arg.name} ( {arg.type} )
+                            {arg.name} (
+                              {arg.type !== "array" &&
+                                <>
+                                  {arg.type}
+                                </>
+                              }
+                              {arg.type === "array" &&
+                                <>
+                                  {toStringArrayType(arg.array)}
+                                </>
+                              }
+                            )
                           </Form.Label>
                           <Col>
                             {arg.type !== "object" &&
