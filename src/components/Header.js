@@ -65,15 +65,17 @@ export class Header extends Component {
           properties: [
             {
               name: "value1",
-              type: "string",
-              value: "value1"
+              type: "string"
             },
             {
               name: "value2",
-              type: "int",
-              value: 1
+              type: "int"
             }
-          ]
+          ],
+          value: {
+            value1: "value1",
+            value2: 1
+          }
         }
       ]
     });
@@ -155,6 +157,21 @@ export class Header extends Component {
     this.props.setStateFromLocalStorage();
   }
 
+  handleClearAll = () => {
+    localStorage.setItem("Url", "");
+
+    let sendJson = JSON.stringify([]);
+    localStorage.setItem("SendMethods", sendJson);
+
+    let receiveJson = JSON.stringify([]);
+    localStorage.setItem("ReceiveMethods", receiveJson);
+
+    let logJson = JSON.stringify([]);
+    localStorage.setItem("Logs", logJson);
+
+    this.props.setStateFromLocalStorage();
+  }
+
   render() {
     return (
     <Navbar  bg="primary" variant="dark">
@@ -165,6 +182,7 @@ export class Header extends Component {
         <Nav className="me-auto">
           <NavDropdown title="Actions" id="basic-nav-dropdown">
             <NavDropdown.Item onClick={this.handleApplingTutorialSettings}>Apply tutorial values</NavDropdown.Item>
+            <NavDropdown.Item onClick={this.handleClearAll}>Clear all</NavDropdown.Item>
           </NavDropdown>
         </Nav>
       </Navbar.Collapse>

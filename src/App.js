@@ -11,7 +11,6 @@ import { Header } from './components/Header';
 import { Url } from './components/Url';
 import { Log } from './components/Log';
 import { ObjectInModal } from './components/ObjectInModal';
-import { ObjectInSendMethod } from './components/ObjectInSendMethod';
 import { ObjectInReceiveMethod } from './components/ObjectInReceiveMethod';
 import { ArrayInModal } from './components/ArrayInModal';
 import toISOStringWithTimezone from './functions/toISOStringWithTimezone';
@@ -207,7 +206,6 @@ export default class App extends Component {
 
     if (event.target.value === "object") {
       arg.properties = [];
-      delete arg.value;
     }
     else {
       delete arg.properties;
@@ -235,7 +233,6 @@ export default class App extends Component {
 
     if (event.target.value === "object") {
       property.properties = [];
-      delete property.value;
     }
     else {
       delete property.properties;
@@ -289,7 +286,15 @@ export default class App extends Component {
     let args = this.state.methodArgsInModal;
     let filteredArgs = checkValidName(args);
 
-    methods.push({name: this.state.methodNameInModal, args: filteredArgs});
+    // Sendの場合はvalueを設定する
+    if (this.state.modalSendOrReceive) {
+      let argsWithValue = [];
+      argsWithValue = this.getArgsWithValue(filteredArgs);
+      methods.push({name: this.state.methodNameInModal, args: argsWithValue});
+    }
+    else {
+      methods.push({name: this.state.methodNameInModal, args: filteredArgs});
+    }
 
     if (this.state.modalSendOrReceive) {
       //this.setState({sendMethods: methods});
@@ -339,7 +344,16 @@ export default class App extends Component {
     let args = this.state.methodArgsInModal;
     let filteredArgs = checkValidName(args);
 
-    methods[this.state.modalIndex] = {name: this.state.methodNameInModal, args: filteredArgs};
+    // Sendの場合はvalueを設定する
+    if (this.state.modalSendOrReceive) {
+      let argsWithValue = [];
+      argsWithValue = this.getArgsWithValue(filteredArgs);
+      methods[this.state.modalIndex] = {name: this.state.methodNameInModal, args: argsWithValue};
+    }
+    else {
+      methods[this.state.modalIndex] = {name: this.state.methodNameInModal, args: filteredArgs};
+    }
+
 
     if (this.state.modalSendOrReceive) {
       //this.setState({sendMethods: methods});
@@ -353,15 +367,106 @@ export default class App extends Component {
     this.handleCloseModal();
   }
   
+  getArgsWithValue = (args) => {
+    let argsWithValue = args.map(arg => {
+      if (arg.type === "object") {
+        arg.value = {};
+        this.setValueOfObject(arg, arg.value);
+
+        // 文字列化
+        arg.value = JSON.stringify(arg.value, null, 2);
+      }
+      else if (arg.type === "array") {
+        arg.value = [];
+        this.setValueOfArray(arg, arg.value);
+
+        // 文字列化
+        arg.value = JSON.stringify(arg.value, null, 2);
+      }
+      else if (arg.type === "int") {
+        arg.value = 0;
+      }
+      else if (arg.type === "bool") {
+        arg.value = false;
+      }
+      else if (arg.type === "DateTime") {
+        let date = new Date();
+        arg.value = toISOStringWithTimezone(date);
+      }
+      else {
+        arg.value = "string";
+      }
+      return arg;
+    });
+
+    return argsWithValue;
+  }
+
+  setValueOfObject = (definition, value) => {
+    definition.properties.forEach(property => {
+      if (property.type === "object") {
+        value[property.name] = {};
+        this.setValueOfObject(property, value[property.name]);
+      }
+      else if (property.type === "array") {
+        value[property.name] = [];
+        this.setValueOfArray(property, value[property.name]);
+      }
+      else if (property.type === "int") {
+        value[property.name] = 0;
+      }
+      else if (property.type === "bool") {
+        value[property.name] = false;
+      }
+      else if (property.type === "DateTime") {
+        let date = new Date();
+        value[property.name] = toISOStringWithTimezone(date);
+      }
+      else {
+        value[property.name] = "string";
+      }
+    });
+  }
+
+  setValueOfArray = (definition, value) => {
+    let array = definition.array;
+    if (array.type === "object") {
+      value[0] = {};
+      this.setValueOfObject(array, value[0]);
+    }
+    else if (array.type === "array") {
+      value[0] = [];
+      this.setValueOfArray(definition.array, value[0]);
+    }
+    else if (array.type === "int") {
+      value[0] = 0;
+    }
+    else if (array.type === "bool") {
+      value[0] = false;
+    }
+    else if (array.type === "DateTime") {
+      let date = new Date();
+      value[0] = toISOStringWithTimezone(date);
+    }
+    else {
+      value[0] = "string";
+    }
+  }
+
   handleChangeArgValue = (event, arg) => {
-    arg.value = event.target.value;
+    if (arg.type === "int") {
+      arg.value = parseInt(event.target.value, 10);
+    }
+    else {
+      arg.value = event.target.value;
+    }
     this.setState({sendMethods: this.state.sendMethods});
 
     this.saveSendMethods();
   }
 
-  handleChangeArgPropertyValue = (event, property) => {
-    property.value = event.target.value;
+  handleChangeArgValueOfBool = (event, arg) => {
+    arg.value = event.target.value;
     this.setState({sendMethods: this.state.sendMethods});
 
     this.saveSendMethods();
@@ -428,7 +533,7 @@ export default class App extends Component {
                   <Card.Body>
                       {method.args.map((arg, argIndex) =>
                       <div key={argIndex}>
-                        <Form.Group as={Row} className="mb-3">
+                        <Form.Group className="mb-3">
                           <Form.Label column xs="auto">
                             {arg.name} (
                               {arg.type !== "array" &&
@@ -443,21 +548,22 @@ export default class App extends Component {
                               }
                             )
                           </Form.Label>
-                          <Col>
-                            {arg.type !== "object" &&
-                              <Form.Control type="text" placeholder="Input value" value={arg.value} onChange={(e) => this.handleChangeArgValue(e, arg)} />
-                            }
-                          </Col>
+                          {(arg.type !== "object" && arg.type !== "array" && arg.type !== "bool") &&
+                            <Form.Control type="text" placeholder="Input value" value={arg.value} onChange={(e) => this.handleChangeArgValue(e, arg)} />
+                          }
+                          {arg.type === "bool" &&
+                            <Form.Select value={arg.value} onChange={(e) => this.handleChangeArgValueOfBool(e, arg)}>
+                              <option value="false">false</option>
+                              <option value="true">true</option>
+                            </Form.Select>
+                          }
+                          {arg.type === "object" &&
+                            <Form.Control as="textarea" value={arg.value} rows={4} />
+                          }
+                          {arg.type === "array" &&
+                            <Form.Control as="textarea" value={arg.value} rows={4} />
+                          }
                         </Form.Group>
-                        {arg.type === "object" &&
-                          <ObjectInSendMethod
-                            methodIndex={methodIndex}
-                            argIndex={argIndex}
-                            properties={arg.properties}
-                            propertyIndexes={[]}
-                            handleChangeArgPropertyValue={(event, property) => this.handleChangeArgPropertyValue(event, property)}
-                          />
-                        }
                       </div>
                       )}
                     <Button onClick={() => this.handleSend(methodIndex)} disabled={!this.state.isConnecting}>
