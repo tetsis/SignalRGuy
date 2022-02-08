@@ -7,6 +7,10 @@ export class Header extends Component {
 
     let sendMethods = [];
     sendMethods.push({
+      name: "Ping",
+      args: []
+    });
+    sendMethods.push({
       name: "SendMessage",
       args: [
         {
@@ -72,25 +76,28 @@ export class Header extends Component {
               type: "int"
             }
           ],
-          value: {
-            value1: "value1",
-            value2: 1
-          }
-        }
+          value: "{\n  \"value1\": \"string\",\n  \"value2\": 0\n}"       }
       ]
     });
     sendMethods.push({
-      name: "SendNumber",
+      name: "CalcTotal",
       args: [
         {
-          name: "number",
-          type: "int",
-          value: 100
+          name: "numbers",
+          type: "array",
+          array : {
+            type: "int"
+          },
+          value: "[\n  1,\n  2\n]"
         }
       ]
     });
 
     let receiveMethods = [];
+    receiveMethods.push({
+      name: "Pong",
+      args: []
+    });
     receiveMethods.push({
       name: "ReceiveMessage",
       args: [
@@ -137,10 +144,10 @@ export class Header extends Component {
       ]
     });
     receiveMethods.push({
-      name: "ReceiveNumber",
+      name: "CalcTotal",
       args: [
         {
-          name: "number",
+          name: "total",
           type: "int"
         }
       ]

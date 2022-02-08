@@ -135,16 +135,19 @@ export default class App extends Component {
     let method = this.state.sendMethods[index];
 
     try {
-      this.state.connection.invoke(method.name, ...method.args.map(arg => convertSendingData(arg)));
+      let args = JSON.parse(JSON.stringify(method.args));
+      let data = method.args.map(arg => convertSendingData(arg));
+
+      this.state.connection.invoke(method.name, ...data);
       console.log("Send: ");
       console.log(method.name, method.args.map(arg => convertSendingData(arg)));
-      this.addAndSaveLog("Send. Method: " + method.name + ", Args: " + toStringData(method.args, method.args.map(arg => convertSendingData(arg))));
+      this.addAndSaveLog("Send. Method: " + method.name + ", Args: " + toStringData(args, data));
 
       toast(() => (
         <span>
           <Badge bg="primary">Send</Badge>
           {method.name}<br/>
-          Args: {toStringData(method.args, method.args.map(arg => convertSendingData(arg)))}
+          Args: {toStringData(args, data)}
         </span>
       ));
 
@@ -465,13 +468,6 @@ export default class App extends Component {
     this.saveSendMethods();
   }
 
-  handleChangeArgValueOfBool = (event, arg) => {
-    arg.value = event.target.value;
-    this.setState({sendMethods: this.state.sendMethods});
-
-    this.saveSendMethods();
-  }
-
   saveSendMethods = () => {
     let sendMethods = this.state.sendMethods;
     let json = JSON.stringify(sendMethods);
@@ -552,16 +548,16 @@ export default class App extends Component {
                             <Form.Control type="text" placeholder="Input value" value={arg.value} onChange={(e) => this.handleChangeArgValue(e, arg)} />
                           }
                           {arg.type === "bool" &&
-                            <Form.Select value={arg.value} onChange={(e) => this.handleChangeArgValueOfBool(e, arg)}>
+                            <Form.Select value={arg.value} onChange={(e) => this.handleChangeArgValue(e, arg)}>
                               <option value="false">false</option>
                               <option value="true">true</option>
                             </Form.Select>
                           }
                           {arg.type === "object" &&
-                            <Form.Control as="textarea" value={arg.value} rows={4} />
+                            <Form.Control as="textarea" value={arg.value} rows={4} onChange={(e) => this.handleChangeArgValue(e, arg)} />
                           }
                           {arg.type === "array" &&
-                            <Form.Control as="textarea" value={arg.value} rows={4} />
+                            <Form.Control as="textarea" value={arg.value} rows={4} onChange={(e) => this.handleChangeArgValue(e, arg)} />
                           }
                         </Form.Group>
                       </div>
