@@ -208,6 +208,46 @@ export class Header extends Component {
     a.parentNode.removeChild(a);
   }
 
+  handleImport = () => {
+    const input = document.createElement("input");
+    document.body.appendChild(input);
+    input.style = "display:none";
+    input.type = "file";
+    input.accept = ".json";
+    input.click();
+    input.addEventListener("change", () => {
+      let reader = new FileReader();
+      reader.readAsText(input.files[0], "utf-8");
+      reader.onload = ()=> {
+        let data = JSON.parse(reader.result);
+
+        // objectとarrayのvalueを文字列化する
+        data.SendMethods.forEach(sendMethod => {
+          sendMethod.args.forEach(arg => {
+            if ((arg.type === "object" || arg.type === "array")) {
+              arg.value = JSON.stringify(arg.value, null, 2);
+            }
+          });
+        });
+
+        localStorage.setItem("Url", data.Url);
+
+        let sendJson = JSON.stringify(data.SendMethods);
+        localStorage.setItem("SendMethods", sendJson);
+
+        let receiveJson = JSON.stringify(data.ReceiveMethods);
+        localStorage.setItem("ReceiveMethods", receiveJson);
+
+        let logJson = JSON.stringify(data.Logs);
+        localStorage.setItem("Logs", logJson);
+
+        this.props.setStateFromLocalStorage();
+      };
+    });
+
+    input.parentNode.removeChild(input);
+  }
+
   render() {
     return (
     <Navbar  bg="primary" variant="dark">
