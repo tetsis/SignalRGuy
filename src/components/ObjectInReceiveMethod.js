@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { Row, Col } from 'react-bootstrap';
 import toStringArrayType from '../functions/toStringArrayType';
 import getArrayContentType from '../functions/getArrayContentType';
-import getArrayContentObject from '../functions/getArrayContentObject';
+import getArrayContent from '../functions/getArrayContent';
 
 export class ObjectInReceiveMethod extends Component {
   render() {
@@ -39,7 +39,7 @@ export class ObjectInReceiveMethod extends Component {
                 <>
                   {getArrayContentType(property.array) === "object" &&
                     <ObjectInReceiveMethod
-                      properties={getArrayContentObject(property.array).properties}
+                      properties={getArrayContent(property.array).properties}
                     />
                   }
                 </>

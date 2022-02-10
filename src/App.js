@@ -19,7 +19,7 @@ import toStringData from './functions/toStringData';
 import convertSendingData from './functions/convertSendingData';
 import toStringArrayType from './functions/toStringArrayType';
 import getArrayContentType from './functions/getArrayContentType';
-import getArrayContentObject from './functions/getArrayContentObject';
+import getArrayContent from './functions/getArrayContent';
 
 export default class App extends Component {
   constructor(props) {
@@ -207,20 +207,8 @@ export default class App extends Component {
   handleChangeArgType = (event, arg) => {
     arg.type = event.target.value;
 
-    if (event.target.value === "object") {
-      arg.properties = [];
-    }
-    else {
-      delete arg.properties;
-    }
-
-    if (event.target.value === "array") {
-      arg.array = {
-        type: "string"
-      };
-    }
-    else {
-      delete arg.array;
+    if (arg.type === "object" || arg.type === "array") {
+      this.setTypeOfObjectAndArray(arg.type, arg);
     }
 
     this.setState({methodArgsInModal: this.state.methodArgsInModal});
@@ -234,20 +222,8 @@ export default class App extends Component {
   handleChangePropertyType = (event, property) => {
     property.type = event.target.value;
 
-    if (event.target.value === "object") {
-      property.properties = [];
-    }
-    else {
-      delete property.properties;
-    }
-
-    if (event.target.value === "array") {
-      property.array = {
-        type: "string"
-      };
-    }
-    else {
-      delete property.array;
+    if (property.type === "object" || property.type === "array") {
+      this.setTypeOfObjectAndArray(property.type, property);
     }
 
     this.setState({methodArgsInModal: this.state.methodArgsInModal});
@@ -256,24 +232,30 @@ export default class App extends Component {
   handleChangeArrayType = (event, array) => {
     array.type = event.target.value;
 
-    if (event.target.value === "object") {
-      array.properties = [];
-      delete array.value;
-    }
-    else {
-      delete array.properties;
+    if (array.type === "object" || array.type === "array") {
+      this.setTypeOfObjectAndArray(array.type, array);
     }
 
-    if (event.target.value === "array") {
-      array.array = {
+    this.setState({methodArgsInModal: this.state.methodArgsInModal});
+  }
+
+  setTypeOfObjectAndArray = (type, data) => {
+    if (type === "object") {
+      data.properties = [];
+      delete data.value;
+    }
+    else {
+      delete data.properties;
+    }
+
+    if (type === "array") {
+      data.array = {
         type: "string"
       };
     }
     else {
-      delete array.array;
+      delete data.array;
     }
-
-    this.setState({methodArgsInModal: this.state.methodArgsInModal});
   }
 
   handleAddMethod = () => {
@@ -300,11 +282,9 @@ export default class App extends Component {
     }
 
     if (this.state.modalSendOrReceive) {
-      //this.setState({sendMethods: methods});
       this.saveSendMethods();
     }
     else {
-      //this.setState({receiveMethods: methods});
       this.saveReceiveMethods();
     }
 
@@ -323,11 +303,9 @@ export default class App extends Component {
     methods.splice(this.state.modalIndex, 1);
 
     if (this.state.modalSendOrReceive) {
-      //this.setState({sendMethods: methods});
       this.saveSendMethods();
     }
     else {
-      //this.setState({receiveMethods: methods});
       this.saveReceiveMethods();
     }
 
@@ -359,11 +337,9 @@ export default class App extends Component {
 
 
     if (this.state.modalSendOrReceive) {
-      //this.setState({sendMethods: methods});
       this.saveSendMethods();
     }
     else {
-      //this.setState({receiveMethods: methods});
       this.saveReceiveMethods();
     }
 
@@ -372,33 +348,13 @@ export default class App extends Component {
   
   getArgsWithValue = (args) => {
     let argsWithValue = args.map(arg => {
-      if (arg.type === "object") {
-        arg.value = {};
-        this.setValueOfObject(arg, arg.value);
+      arg.value = this.setValue(arg, arg.value);
 
+      if (arg.type === "object" || arg.type === "array") {
         // 文字列化
         arg.value = JSON.stringify(arg.value, null, 2);
       }
-      else if (arg.type === "array") {
-        arg.value = [];
-        this.setValueOfArray(arg, arg.value);
 
-        // 文字列化
-        arg.value = JSON.stringify(arg.value, null, 2);
-      }
-      else if (arg.type === "int") {
-        arg.value = 0;
-      }
-      else if (arg.type === "bool") {
-        arg.value = false;
-      }
-      else if (arg.type === "DateTime") {
-        let date = new Date();
-        arg.value = toISOStringWithTimezone(date);
-      }
-      else {
-        arg.value = "string";
-      }
       return arg;
     });
 
@@ -407,53 +363,38 @@ export default class App extends Component {
 
   setValueOfObject = (definition, value) => {
     definition.properties.forEach(property => {
-      if (property.type === "object") {
-        value[property.name] = {};
-        this.setValueOfObject(property, value[property.name]);
-      }
-      else if (property.type === "array") {
-        value[property.name] = [];
-        this.setValueOfArray(property, value[property.name]);
-      }
-      else if (property.type === "int") {
-        value[property.name] = 0;
-      }
-      else if (property.type === "bool") {
-        value[property.name] = false;
-      }
-      else if (property.type === "DateTime") {
-        let date = new Date();
-        value[property.name] = toISOStringWithTimezone(date);
-      }
-      else {
-        value[property.name] = "string";
-      }
+      value[property.name] = this.setValue(property, value[property.name]);
     });
   }
 
   setValueOfArray = (definition, value) => {
     let array = definition.array;
-    if (array.type === "object") {
-      value[0] = {};
-      this.setValueOfObject(array, value[0]);
+    value[0] = this.setValue(array, value[0]);
+  }
+
+  setValue = (definition, value) => {
+    if (definition.type === "object") {
+      value = {};
+      this.setValueOfObject(definition, value);
     }
-    else if (array.type === "array") {
-      value[0] = [];
-      this.setValueOfArray(definition.array, value[0]);
+    else if (definition.type === "array") {
+      value = [];
+      this.setValueOfArray(definition, value);
     }
-    else if (array.type === "int") {
-      value[0] = 0;
+    else if (definition.type === "int") {
+      value = 0;
     }
-    else if (array.type === "bool") {
-      value[0] = false;
+    else if (definition.type === "bool") {
+      value = false;
     }
-    else if (array.type === "DateTime") {
+    else if (definition.type === "DateTime") {
       let date = new Date();
-      value[0] = toISOStringWithTimezone(date);
+      value = toISOStringWithTimezone(date);
     }
     else {
-      value[0] = "string";
+      value = "string";
     }
+    return value;
   }
 
   handleChangeArgValue = (event, arg) => {
@@ -614,7 +555,7 @@ export default class App extends Component {
                           <>
                             {getArrayContentType(arg.array) === "object" &&
                               <ObjectInReceiveMethod
-                                properties={getArrayContentObject(arg.array).properties}
+                                properties={getArrayContent(arg.array).properties}
                               />
                             }
                           </>

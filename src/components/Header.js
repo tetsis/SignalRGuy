@@ -61,22 +61,31 @@ export class Header extends Component {
       ]
     });
     sendMethods.push({
-      name: "SendObject",
+      name: "GetWeek",
       args: [
         {
-          name: "object1",
+          name: "date",
           type: "object",
           properties: [
             {
-              name: "value1",
-              type: "string"
+              name: "Year",
+              type: "int"
             },
             {
-              name: "value2",
+              name: "Month",
               type: "int"
+            },
+            {
+              name: "Day",
+              type: "int"
+            },
+            {
+              name: "Locale",
+              type: "string"
             }
           ],
-          value: "{\n  \"value1\": \"string\",\n  \"value2\": 0\n}"       }
+          value: "{\n  \"Year\": 2022,\n  \"Month\": 1,\n  \"Day\": 1,\n  \"Locale\": \"ja-jp\"\n}"
+        }
       ]
     });
     sendMethods.push({
@@ -125,21 +134,11 @@ export class Header extends Component {
       ]
     });
     receiveMethods.push({
-      name: "ReceiveObject",
+      name: "GetWeek",
       args: [
         {
-          name: "object1",
-          type: "object",
-          properties: [
-            {
-              name: "value1",
-              type: "string"
-            },
-            {
-              name: "value2",
-              type: "int"
-            }
-          ]
+          name: "week",
+          type: "string"
         }
       ]
     });
@@ -179,6 +178,36 @@ export class Header extends Component {
     this.props.setStateFromLocalStorage();
   }
 
+  handleExport = () => {
+    let json = {};
+
+    json.Url = localStorage.getItem("Url");
+    json.SendMethods = JSON.parse(localStorage.getItem("SendMethods"));
+    json.ReceiveMethods = JSON.parse(localStorage.getItem("ReceiveMethods"));
+    json.Logs = JSON.parse(localStorage.getItem("Logs"));
+
+    // objectとarrayのvalueをオブジェクト化する
+    json.SendMethods.forEach(sendMethod => {
+      sendMethod.args.forEach(arg => {
+        if ((arg.type === "object" || arg.type === "array")) {
+          arg.value = JSON.parse(arg.value);
+        }
+      });
+    });
+
+    let blob = new Blob([ JSON.stringify(json, null, 2) ], { "type" : "text/plain" });
+    let url =  window.URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    document.body.appendChild(a);
+    a.style = "display:none";
+    a.href = url;
+    a.download = "signalrguy.json"
+    a.click();
+    window.URL.revokeObjectURL(url);
+    a.parentNode.removeChild(a);
+  }
+
   render() {
     return (
     <Navbar  bg="primary" variant="dark">
@@ -190,6 +219,8 @@ export class Header extends Component {
           <NavDropdown title="Actions" id="basic-nav-dropdown">
             <NavDropdown.Item onClick={this.handleApplingTutorialSettings}>Apply tutorial values</NavDropdown.Item>
             <NavDropdown.Item onClick={this.handleClearAll}>Clear all</NavDropdown.Item>
+            <NavDropdown.Item onClick={this.handleExport}>Export to file</NavDropdown.Item>
+            <NavDropdown.Item onClick={this.handleImport}>Import from file</NavDropdown.Item>
           </NavDropdown>
         </Nav>
       </Navbar.Collapse>
