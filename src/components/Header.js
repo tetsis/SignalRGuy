@@ -3,7 +3,7 @@ import { Container, Navbar, Nav, NavDropdown } from 'react-bootstrap';
 
 export class Header extends Component {
   handleApplingTutorialSettings = () => {
-    let url = "https://signalrserver20211231135855.azurewebsites.net/tutorialHub";
+    let url = "https://signalrguy.azurewebsites.net/tutorialHub";
 
     let sendMethods = [];
     sendMethods.push({
@@ -17,6 +17,16 @@ export class Header extends Component {
           name: "message",
           type: "string",
           value: "Hello, SignalR."
+        }
+      ]
+    });
+    sendMethods.push({
+      name: "JoinToGroup",
+      args: [
+        {
+          name: "group",
+          type: "string",
+          value: "tutorial group"
         }
       ]
     });
@@ -37,16 +47,6 @@ export class Header extends Component {
           name: "message",
           type: "string",
           value: "Hello everyone, this is guest."
-        }
-      ]
-    });
-    sendMethods.push({
-      name: "JoinToGroup",
-      args: [
-        {
-          name: "group",
-          type: "string",
-          value: "tutorial group"
         }
       ]
     });
