@@ -170,7 +170,7 @@ export default class App extends Component {
 
     this.setState({showModal: true})
   }
-    
+
   handleCloseModal = () => this.setState({showModal: false});
 
   handleAddArg = () => {
@@ -311,7 +311,7 @@ export default class App extends Component {
 
     this.handleCloseModal();
   }
-  
+
   handleEditMethod = () => {
     let methods;
     if (this.state.modalSendOrReceive) {
@@ -345,7 +345,7 @@ export default class App extends Component {
 
     this.handleCloseModal();
   }
-  
+
   getArgsWithValue = (args) => {
     let argsWithValue = args.map(arg => {
       arg.value = this.setValue(arg, arg.value);
@@ -409,6 +409,16 @@ export default class App extends Component {
     this.saveSendMethods();
   }
 
+  handleBlurArgValue = (event, arg) => {
+    if (arg.type === "object" || arg.type === "array") {
+      // 整形
+      arg.value = JSON.stringify(JSON.parse(event.target.value), null, 2);
+    }
+    this.setState({sendMethods: this.state.sendMethods});
+
+    this.saveSendMethods();
+  }
+
   saveSendMethods = () => {
     let sendMethods = this.state.sendMethods;
     let json = JSON.stringify(sendMethods);
@@ -459,7 +469,7 @@ export default class App extends Component {
               </Button>
             </h4>
             <div className="method-content">
-              {this.state.sendMethods.map((method, methodIndex) => 
+              {this.state.sendMethods.map((method, methodIndex) =>
                 <Card key={methodIndex} className="card">
                   <Card.Header as="h5">
                     {method.name}
@@ -495,10 +505,10 @@ export default class App extends Component {
                             </Form.Select>
                           }
                           {arg.type === "object" &&
-                            <Form.Control as="textarea" value={arg.value} rows={4} onChange={(e) => this.handleChangeArgValue(e, arg)} />
+                            <Form.Control as="textarea" value={arg.value} rows={4} onChange={(e) => this.handleChangeArgValue(e, arg)} onBlur={(e) => this.handleBlurArgValue(e, arg)} />
                           }
                           {arg.type === "array" &&
-                            <Form.Control as="textarea" value={arg.value} rows={4} onChange={(e) => this.handleChangeArgValue(e, arg)} />
+                            <Form.Control as="textarea" value={arg.value} rows={4} onChange={(e) => this.handleChangeArgValue(e, arg)} onBlur={(e) => this.handleBlurArgValue(e, arg)} />
                           }
                         </Form.Group>
                       </div>
@@ -519,7 +529,7 @@ export default class App extends Component {
               </Button>
             </h4>
             <div className="method-content">
-              {this.state.receiveMethods.map((method, methodIndex) => 
+              {this.state.receiveMethods.map((method, methodIndex) =>
                 <Card key={methodIndex} className="card">
                   <Card.Header as="h5">
                     {method.name}
@@ -599,7 +609,7 @@ export default class App extends Component {
                   Args
                   <Button className="stick-button" variant="info" size="sm" onClick={this.handleAddArg}>Add</Button>
                 </Form.Label>
-                {this.state.methodArgsInModal.map((arg, argIndex) => 
+                {this.state.methodArgsInModal.map((arg, argIndex) =>
                   <Container key={argIndex}>
                     <Row className="mb-3">
                       <Col xs="auto">
