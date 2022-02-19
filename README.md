@@ -20,6 +20,14 @@ How to use tutorial is bellow.
 [Source code of tutorial server](https://github.com/tetsis/SignalRGuyTutorialServer)
 
 ## How to use
+1. Input the URL of SignalR hub endpoint.
+    - Server must be allow cross-origin access from "https://signalrguy.vercel.app/".
+1. Define send methods and receive methods.
+1. Connect to server to click "Connect" button.
+1. Send messages to click "Send" buttons.
+1. Check receiving messages.
+
+## Sections
 ### URL
 In the top text box, input the URL of SignalR Hub.
 Click the "Connect" button to connect to hub.
