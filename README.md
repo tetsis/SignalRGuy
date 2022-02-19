@@ -1,4 +1,6 @@
 # SignalR Guy
+![Vercel](https://vercelbadge.vercel.app/api/tetsis/signalrguy)
+
 ## What is "SignalR Guy"
 SignalR Guy is a tool for testing the operation of SignalR servers.
 You can check if the SignalR server you are developing sends and receives messages as expected.
